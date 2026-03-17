@@ -34,7 +34,12 @@ jobs:
           if [ -f tools/etl_zoho_prospecting.py ]; then python tools/etl_zoho_prospecting.py; fi
           if [ -f tools/calc_new_contacts.py ]; then python tools/calc_new_contacts.py; fi
 
-      - name: Lint optionally
+      - name: Python syntax check
         if: ${{ always() }}
         run: |
-          echo "Workflow completed: ETL steps executed."  
+          cd "${{ github.workspace }}"
+          python -m compileall .
+
+      - name: Workflow complete
+        if: ${{ always() }}
+        run: echo "Workflow completed: ETL steps executed."
