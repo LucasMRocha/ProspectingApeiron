@@ -4,3 +4,8 @@ _output/
 dist/
 *.xlsx
 *.log
+Support Files/_backup/
+Support Files/_output/
+Support Files/Zoho data/
+Development/dist/
+Development/tools/__pycache__/

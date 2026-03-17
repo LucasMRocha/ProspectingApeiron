@@ -1,6 +1,6 @@
 @echo off
 setlocal
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\build-single-file.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\Development\tools\build-single-file.ps1"
 if errorlevel 1 (
   echo Failed to build single-file dashboard.
   pause

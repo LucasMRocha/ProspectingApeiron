@@ -1,4 +1,0 @@
-source_file,source_column,target_sheet,target_column,transformation,observation
-Zoho data/Accounts_2026_03_17.csv,Account Name,Accounts,company_name,trim,needs type mapping
-Zoho data/Contacts_2026_03_17.csv,Email,???? Contacts,email,lowercase,standardization
-Zoho data/Leads_2026_03_17.csv,Lead Name,???? Contacts,name,trim as contact,lead treated as contact

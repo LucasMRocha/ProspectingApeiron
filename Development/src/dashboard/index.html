@@ -29,12 +29,23 @@
     <div class="panel">
       <div class="panel-topline">
         <h2>Operational Base (editable)</h2>
-        <div class="table-mode-switch">
-          <label for="operationalMode">List by</label>
-          <select id="operationalMode">
-            <option value="contacts">Contacts</option>
-            <option value="companies">Companies</option>
-          </select>
+        <div class="panel-controls">
+          <div class="table-mode-switch">
+            <label for="operationalMode">List by</label>
+            <select id="operationalMode">
+              <option value="contacts">Contacts</option>
+              <option value="companies">Companies</option>
+            </select>
+          </div>
+          <div class="table-mode-switch">
+            <label for="rowsPerPage">Rows</label>
+            <select id="rowsPerPage">
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="0">All</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="table-wrap">
@@ -69,6 +80,11 @@
           </thead>
           <tbody id="tbody"></tbody>
         </table>
+      </div>
+      <div class="table-pagination">
+        <button id="btnPrevPage" type="button" class="pager-btn">Previous</button>
+        <span id="pageInfo">Showing 0-0 of 0 | Page 1/1</span>
+        <button id="btnNextPage" type="button" class="pager-btn">Next</button>
       </div>
       <div class="foot">Changes are automatically saved in this browser on this machine.<span id="syncMsg"></span></div>
     </div>

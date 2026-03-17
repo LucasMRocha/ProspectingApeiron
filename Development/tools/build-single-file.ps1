@@ -17,10 +17,10 @@ foreach ($p in @($indexPath, $cssPath, $appPath, $dataPath, $logoPath)) {
   if (!(Test-Path $p)) { throw "Missing required file: $p" }
 }
 
-$html = Get-Content -Raw -Path $indexPath
-$css = Get-Content -Raw -Path $cssPath
-$app = Get-Content -Raw -Path $appPath
-$data = Get-Content -Raw -Path $dataPath
+$html = Get-Content -Raw -Path $indexPath -Encoding UTF8
+$css = Get-Content -Raw -Path $cssPath -Encoding UTF8
+$app = Get-Content -Raw -Path $appPath -Encoding UTF8
+$data = Get-Content -Raw -Path $dataPath -Encoding UTF8
 $logoB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($logoPath))
 
 $html = $html -replace '<link rel="stylesheet" href="\./styles\.css">', ("<style>`r`n" + $css + "`r`n</style>")

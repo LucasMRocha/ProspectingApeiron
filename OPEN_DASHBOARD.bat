@@ -2,7 +2,7 @@
 setlocal
 
 set "PORT=8777"
-set "APPDIR=%~dp0dist"
+set "APPDIR=%~dp0Development\dist"
 set "PAGE=Prospecting_Dashboard_single_file.html"
 set "URL=http://localhost:%PORT%/%PAGE%"
 

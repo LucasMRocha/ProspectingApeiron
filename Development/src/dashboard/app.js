@@ -19,6 +19,8 @@ const COLUMN_FILTER_IDS = [
 
 let onlyOverdue = false;
 let operationalMode = "contacts";
+let currentPage = 1;
+let pageSize = 25;
 let leads = normalizeLeadChannels(loadData());
 
 function text(v) {
@@ -281,6 +283,44 @@ function getChannelChoices() {
   return ["No contact", ...CHANNEL_METHODS];
 }
 
+function duplicateKeyForLead(lead) {
+  const nameKey = norm(lead?.name);
+  const companyKey = norm(lead?.company);
+  if (!nameKey || !companyKey) return "";
+  return `${nameKey}|${companyKey}`;
+}
+
+function buildDuplicateKeySet(data) {
+  const counts = new Map();
+  (data || []).forEach((lead) => {
+    const key = duplicateKeyForLead(lead);
+    if (!key) return;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return new Set([...counts.entries()].filter(([, count]) => count > 1).map(([key]) => key));
+}
+
+function paginateRows(rows) {
+  const total = rows.length;
+  const size = Number(pageSize) || 0;
+  if (size <= 0) {
+    currentPage = 1;
+    return { rows, total, totalPages: 1, page: 1, start: total ? 1 : 0, end: total };
+  }
+  const totalPages = Math.max(1, Math.ceil(total / size));
+  currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const startIndex = (currentPage - 1) * size;
+  const pageRows = rows.slice(startIndex, startIndex + size);
+  return {
+    rows: pageRows,
+    total,
+    totalPages,
+    page: currentPage,
+    start: total ? startIndex + 1 : 0,
+    end: startIndex + pageRows.length,
+  };
+}
+
 function getColumnFilters() {
   return {
     id: norm(document.getElementById("cfId")?.value),
@@ -336,13 +376,21 @@ function filtered() {
 }
 
 function renderKPIs(data) {
+  const uniqueCompanies = new Set(data.map((l) => norm(l.company)).filter(Boolean)).size;
+  const directContact = data.filter((l) => parseChannelSet(l.channel).size > 0).length;
+  const contactCoverage = data.length ? Math.round((directContact / data.length) * 100) : 0;
+  const duplicateNameCompanyKeys = buildDuplicateKeySet(data).size;
+
   const kpis = [
     ["Total Leads", data.length],
+    ["Unique Companies", uniqueCompanies],
     ["High Priority", data.filter((l) => l.priority === "High").length],
     ["In Contact", data.filter((l) => l.status === "In Contact").length],
     ["Meeting Scheduled", data.filter((l) => l.status === "Meeting Scheduled").length],
     ["In SharePoint", data.filter((l) => text(l.sharePointId).trim() !== "").length],
     ["No Contact", data.filter((l) => parseChannelSet(l.channel).size === 0).length],
+    ["Direct Contact Coverage", `${contactCoverage}%`],
+    ["Duplicate Name+Company", duplicateNameCompanyKeys],
     ["Overdue Actions", data.filter(isOverdue).length],
   ];
 
@@ -512,6 +560,7 @@ function updateOperationalHeaders() {
 function renderTable(data) {
   const tb = document.getElementById("tbody");
   tb.innerHTML = "";
+  const duplicateKeySet = operationalMode === "contacts" ? buildDuplicateKeySet(data) : new Set();
 
   data.forEach((l) => {
     const companyGroup = Array.isArray(l._groupLeads) ? l._groupLeads : null;
@@ -526,7 +575,9 @@ function renderTable(data) {
       ? `<strong>${companyGroup.length} contact${companyGroup.length > 1 ? "s" : ""}</strong><span class="company-subline">${escHtml(
           l.name || "No named contacts"
         )}</span>`
-      : `<button class="contact-link" type="button" data-open-contact="${escAttr(l.id)}">${escHtml(l.name || "")}</button>`;
+      : `<button class="contact-link" type="button" data-open-contact="${escAttr(l.id)}">${escHtml(l.name || "")}</button>${
+          duplicateKeySet.has(duplicateKeyForLead(l)) ? '<span class="dup-flag">Possible duplicate</span>' : ""
+        }`;
 
     const sharePointTag =
       inSharePointCount === 0
@@ -573,6 +624,22 @@ function renderTable(data) {
   });
 }
 
+function renderPagination(meta) {
+  const info = document.getElementById("pageInfo");
+  const prev = document.getElementById("btnPrevPage");
+  const next = document.getElementById("btnNextPage");
+  if (!info || !prev || !next) return;
+
+  const totalPages = meta.totalPages || 1;
+  const page = meta.page || 1;
+  info.textContent = meta.total
+    ? `Showing ${meta.start}-${meta.end} of ${meta.total} | Page ${page}/${totalPages}`
+    : "No records";
+
+  prev.disabled = page <= 1 || !meta.total;
+  next.disabled = page >= totalPages || !meta.total;
+}
+
 function refresh() {
   const data = filtered();
   renderKPIs(data);
@@ -580,7 +647,9 @@ function refresh() {
   renderAgenda(data);
   updateOperationalHeaders();
   const tableData = operationalMode === "companies" ? buildCompanyRows(data) : data;
-  renderTable(tableData);
+  const pageMeta = paginateRows(tableData);
+  renderTable(pageMeta.rows);
+  renderPagination(pageMeta);
 }
 
 function exportCsv() {
@@ -691,25 +760,46 @@ async function saveToExcel(file) {
 }
 
 function wireUi() {
-  document.getElementById("q").addEventListener("input", refresh);
-  document.getElementById("fStatus").addEventListener("change", refresh);
-  document.getElementById("fPrio").addEventListener("change", refresh);
-  document.getElementById("fChannel").addEventListener("change", refresh);
+  const refreshFromFirstPage = () => {
+    currentPage = 1;
+    refresh();
+  };
+
+  document.getElementById("q").addEventListener("input", refreshFromFirstPage);
+  document.getElementById("fStatus").addEventListener("change", refreshFromFirstPage);
+  document.getElementById("fPrio").addEventListener("change", refreshFromFirstPage);
+  document.getElementById("fChannel").addEventListener("change", refreshFromFirstPage);
   document.getElementById("operationalMode").addEventListener("change", (event) => {
     operationalMode = event.target.value === "companies" ? "companies" : "contacts";
+    currentPage = 1;
+    refresh();
+  });
+  document.getElementById("rowsPerPage").addEventListener("change", (event) => {
+    const value = Number(event.target.value);
+    pageSize = Number.isFinite(value) ? value : 25;
+    currentPage = 1;
+    refresh();
+  });
+  document.getElementById("btnPrevPage").addEventListener("click", () => {
+    currentPage = Math.max(1, currentPage - 1);
+    refresh();
+  });
+  document.getElementById("btnNextPage").addEventListener("click", () => {
+    currentPage += 1;
     refresh();
   });
 
   COLUMN_FILTER_IDS.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.addEventListener("input", refresh);
-    el.addEventListener("change", refresh);
+    el.addEventListener("input", refreshFromFirstPage);
+    el.addEventListener("change", refreshFromFirstPage);
   });
 
   document.getElementById("btnOverdue").addEventListener("click", () => {
     onlyOverdue = !onlyOverdue;
     document.getElementById("btnOverdue").textContent = onlyOverdue ? "Show all" : "Only overdue";
+    currentPage = 1;
     refresh();
   });
   document.getElementById("btnExport").addEventListener("click", exportCsv);

@@ -1,7 +1,7 @@
 @echo off
 setlocal
 set "ROOT=%~dp0"
-set "INDEX=%ROOT%src\dashboard\index.html"
+set "INDEX=%ROOT%Development\src\dashboard\index.html"
 
 if not exist "%INDEX%" (
   echo Dashboard file not found:
