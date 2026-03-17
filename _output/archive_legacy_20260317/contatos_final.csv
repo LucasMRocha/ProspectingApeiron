@@ -1,0 +1,5 @@
+contact_id,contact_name,email,phone,mobile,company_id,company_name,status,source,source_type,zoho_account_id
+15,Aline Pinheiro do Nascimento,,,,8.0,NOV,,Correspondência por Rede,contact,zcrm_7083895000000613270
+36,Everton Neto,everton.neto@modec.com,+5527999795059,,22.0,Modec,,zoho,contact,zcrm_7083895000000683249
+4,Josiane Tregnago,josiane.tregnago@autoglass.com.br,+5527992465023,,4.0,AUTOGLASS,,Referência de Funcionários,contact,zcrm_7083895000000609089
+3,Renato de Souza,renato@altus.com.br,+551120391950,+5519992358052,3.0,ALTUS,,Referência de Funcionários,contact,zcrm_7083895000000609011

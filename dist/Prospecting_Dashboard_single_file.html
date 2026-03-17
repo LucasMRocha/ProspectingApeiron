@@ -1,0 +1,1359 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Apeiron Brasil - Commercial Operations Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/xlsx-populate/browser/xlsx-populate.min.js"></script>
+  <style>
+:root {
+      --brand-lime:#66D436;
+      --brand-lime-deep:#4FBE2E;
+      --brand-ink:#101114;
+      --brand-muted:#626865;
+      --surface:#F3F5F2;
+      --surface-2:#ECEFEC;
+      --card:#FFFFFF;
+      --line:#D5DDD2;
+      --shadow:0 12px 30px rgba(16,17,20,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:
+        radial-gradient(900px 420px at 100% -120px, #EEF7EA 0%, rgba(238,247,234,0) 60%),
+        linear-gradient(180deg, #F7F8F6 0%, #F2F4F1 100%);
+      color:var(--brand-ink);
+      font-family:'Manrope',sans-serif;
+    }
+
+    .app{max-width:1380px;margin:0 auto;padding:18px}
+
+    .top{
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      gap:16px;
+      align-items:center;
+      padding:18px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, #FFFFFF 0%, #F4F6F3 100%);
+      border-radius:18px;
+      color:var(--brand-ink);
+      box-shadow:var(--shadow);
+    }
+    .top::before{
+      content:'';
+      position:absolute;
+      left:0;right:0;top:0;
+      height:6px;
+      background:linear-gradient(90deg,var(--brand-lime),var(--brand-lime-deep));
+    }
+
+    .logo{
+      width:340px;
+      height:86px;
+      border-radius:12px;
+      background:#E9E9E9;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      flex:0 0 auto;
+      border:1px solid #DCDCDC;
+    }
+    .logo img{width:100%;height:100%;object-fit:contain}
+
+    .top h1{margin:0;font-family:'Space Grotesk',sans-serif;font-size:24px;letter-spacing:.2px}
+    .top p{margin:2px 0 0;font-size:13px;color:var(--brand-muted)}
+
+    .toolbar{margin-top:14px;display:grid;grid-template-columns:2fr repeat(6,minmax(120px,1fr));gap:10px}
+    .toolbar input,.toolbar select,.toolbar button{
+      height:42px;
+      border-radius:11px;
+      border:1px solid var(--line);
+      padding:0 12px;
+      font-family:inherit;
+      font-size:14px;
+      background:#fff;
+      color:var(--brand-ink);
+    }
+    .toolbar button{
+      cursor:pointer;
+      font-weight:800;
+      background:linear-gradient(180deg,var(--brand-lime),var(--brand-lime-deep));
+      color:#0F1B12;
+      border:none;
+      box-shadow:0 6px 14px rgba(79,190,46,.32);
+    }
+    .toolbar button.alt{
+      background:#fff;
+      color:#1B4D10;
+      border:1px solid #C9D9C4;
+      box-shadow:none;
+    }
+
+    .kpis{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+    .kpi{
+      background:linear-gradient(180deg,#fff,#F8FAF7);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 13px;
+      box-shadow:var(--shadow);
+      position:relative;
+    }
+    .kpi::before{
+      content:'';
+      position:absolute;
+      left:0;top:0;bottom:0;
+      width:4px;
+      border-radius:14px 0 0 14px;
+      background:linear-gradient(180deg,var(--brand-lime),var(--brand-lime-deep));
+    }
+    .kpi .t{font-size:12px;color:var(--brand-muted)}
+    .kpi .v{font-size:27px;font-weight:800;line-height:1.05;margin-top:2px;color:var(--brand-ink)}
+
+    .layout{margin-top:12px;display:grid;grid-template-columns:1fr;gap:12px}
+    @media (max-width:1240px){.toolbar{grid-template-columns:1fr 1fr}}
+
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
+    .panel h2{
+      margin:2px 0 10px;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:18px;
+      color:#152017;
+      padding-left:10px;
+      border-left:4px solid var(--brand-lime);
+    }
+    .panel-topline{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+    .panel-topline h2{margin:2px 0}
+    .table-mode-switch{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      color:var(--brand-muted);
+      font-weight:700;
+    }
+    .table-mode-switch select{
+      height:34px;
+      border-radius:9px;
+      border:1px solid #CFE0CB;
+      background:#fff;
+      font:inherit;
+      color:var(--brand-ink);
+      padding:0 10px;
+      min-width:132px;
+    }
+
+    .kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    @media (max-width:900px){.kanban{grid-template-columns:1fr}}
+    .lane{border:1px solid var(--line);border-radius:12px;background:#FBFDFB;min-height:160px;display:flex;flex-direction:column}
+    .lane .head{
+      padding:10px;
+      border-bottom:1px dashed #CFE2C9;
+      background:#EEF7EA;
+      font-size:13px;
+      font-weight:800;
+      display:flex;
+      justify-content:space-between;
+      color:#18441C;
+    }
+    .lane .list{padding:8px;display:grid;gap:8px;max-height:370px;overflow:auto}
+
+    .card{border:1px solid #D7E4D3;background:#fff;border-radius:10px;padding:8px 9px}
+    .card .name{font-weight:800;font-size:13px;line-height:1.2}
+    .card .meta{font-size:12px;color:var(--brand-muted)}
+
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-top:4px}
+    .pill.high{background:#FDECEA;color:#942A1D}
+    .pill.medium{background:#FFF4DD;color:#8A5A00}
+    .pill.low{background:#E8F8EC;color:#1D6C41}
+
+    .agenda{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+    .agenda-item{font-size:12px;padding:5px 0;border-bottom:1px dashed #E8EEE6}
+
+    .table-wrap{overflow:auto;border-radius:12px;border:1px solid var(--line)}
+    table{width:100%;border-collapse:collapse;min-width:1580px;background:#fff}
+    th,td{padding:8px 9px;border-bottom:1px solid #EDF3EF;font-size:13px;vertical-align:top}
+    th{background:#EEF7EA;font-weight:800;color:#17422D}
+    thead tr.head-row th{position:sticky;top:0;z-index:3}
+    thead tr.filter-row th{
+      position:sticky;
+      top:42px;
+      z-index:2;
+      background:#F5FAF2;
+      padding:6px 8px;
+      border-bottom:1px solid #DFEBDD;
+    }
+    .col-filter{
+      width:100%;
+      min-height:34px;
+      border:1px solid #CFE0CB;
+      border-radius:8px;
+      padding:6px 9px;
+      font:inherit;
+      font-size:12px;
+      line-height:1.2;
+      background:#fff;
+      color:#1A251B;
+    }
+    .col-filter::placeholder{color:#6E786E}
+    tr.overdue{background:#FFF7F6}
+    .mini{font-size:11px;color:var(--brand-muted)}
+    .company-subline{
+      display:block;
+      margin-top:3px;
+      color:#4D5D4C;
+      font-size:11px;
+      line-height:1.25;
+    }
+
+    .inline-input,.inline-select{width:100%;height:30px;border:1px solid #D7E4D3;border-radius:8px;padding:0 8px;font:inherit;font-size:12px;background:#fff}
+    .inline-select{
+      min-width:150px;
+      white-space:nowrap;
+      text-overflow:clip;
+      padding-right:26px;
+    }
+    .inline-textarea{
+      width:100%;
+      min-height:58px;
+      border:1px solid #D7E4D3;
+      border-radius:8px;
+      padding:7px 9px;
+      font:inherit;
+      font-size:12px;
+      line-height:1.35;
+      background:#fff;
+      resize:vertical;
+    }
+    .channel-multi{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:4px 8px;
+      min-width:220px;
+      padding:2px 0;
+    }
+    .channel-option{
+      display:flex;
+      align-items:center;
+      gap:5px;
+      font-size:11px;
+      color:#163A1F;
+      white-space:nowrap;
+      line-height:1.2;
+    }
+    .channel-option input{
+      margin:0;
+      accent-color:var(--brand-lime-deep);
+      width:14px;
+      height:14px;
+      cursor:pointer;
+    }
+    .channel-option span{overflow-wrap:anywhere}
+
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800}
+    .tag.share{background:#E7F6ED;color:#1F6D41}
+    .tag.wait{background:#FFF4DD;color:#9A6700}
+
+    .foot{margin-top:10px;font-size:12px;color:var(--brand-muted)}
+    #syncMsg{display:inline-block;margin-left:8px;font-weight:700}
+  
+
+    /* readability + prevent clipped words */
+    .toolbar{grid-template-columns:minmax(300px,2.2fr) repeat(6,minmax(140px,1fr));}
+    .toolbar input,.toolbar select,.toolbar button{height:44px;line-height:1.2;padding:0 12px;}
+
+    th,td{white-space:normal;overflow-wrap:break-word;word-break:normal;hyphens:auto;}
+    .card .name,.card .meta,.agenda-item,.top h1,.top p,.panel h2,.kpi .t,.kpi .v{overflow-wrap:anywhere;word-break:break-word;}
+
+    .inline-input,.inline-select{height:34px;line-height:1.2;padding:4px 8px;}
+
+    @media (max-width:1500px){
+      .toolbar{grid-template-columns:minmax(260px,2fr) repeat(3,minmax(140px,1fr));}
+    }
+    @media (max-width:960px){
+      .toolbar{grid-template-columns:1fr;}
+    }
+
+    /* UI legibility consistency (buttons + filters) */
+    .toolbar{
+      align-items:stretch;
+      grid-auto-rows:minmax(44px,auto);
+    }
+    .toolbar input,.toolbar select,.toolbar button{
+      min-height:44px;
+      font-size:14px;
+      line-height:1.25;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+      touch-action:manipulation;
+    }
+    .toolbar input,.toolbar select{
+      padding:8px 12px;
+    }
+    .toolbar button{
+      padding:8px 12px;
+      white-space:normal;
+      text-align:center;
+    }
+    .toolbar button.alt{
+      border:1px solid #C9D9C4;
+      color:#1B4D10;
+    }
+    #q{
+      font-size:14px;
+      line-height:1.3;
+    }
+    #q::placeholder{
+      color:#6D756F;
+    }
+    #fStatus,#fPrio,#fChannel{
+      font-size:13px;
+    }
+
+    .inline-input,.inline-select{
+      min-height:36px;
+      padding:6px 10px;
+      font-size:12px;
+      line-height:1.3;
+    }
+    .inline-textarea{
+      min-height:62px;
+      padding:7px 10px;
+      font-size:12px;
+      line-height:1.35;
+      overflow-wrap:break-word;
+      word-break:normal;
+      hyphens:auto;
+    }
+
+    th:nth-child(2),td:nth-child(2){min-width:190px;}
+    th:nth-child(3),td:nth-child(3){min-width:180px;}
+    th:nth-child(4),td:nth-child(4){min-width:170px;}
+    th:nth-child(5),td:nth-child(5){min-width:170px;}
+    th:nth-child(6),td:nth-child(6){min-width:130px;}
+    th:nth-child(7),td:nth-child(7){min-width:280px;}
+    th:nth-child(9),td:nth-child(9){min-width:240px;}
+    th:nth-child(10),td:nth-child(10){min-width:280px;}
+
+    .panel h2,.lane .head,.foot{
+      overflow-wrap:anywhere;
+      word-break:break-word;
+      line-height:1.35;
+    }
+
+    .contact-link{
+      border:none;
+      background:none;
+      color:#155A2A;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+      padding:0;
+      text-align:left;
+      text-decoration:underline;
+      text-decoration-color:#B7DFA8;
+      text-underline-offset:2px;
+    }
+    .contact-link:hover{color:#0F4B22}
+    .company-link{
+      border:none;
+      background:none;
+      color:#1A251B;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+      padding:0;
+      text-align:left;
+      text-decoration:underline;
+      text-decoration-color:#C9DCC2;
+      text-underline-offset:2px;
+    }
+    .company-link:hover{color:#114F26}
+
+    .contact-modal[aria-hidden="true"]{display:none}
+    .contact-modal{
+      position:fixed;
+      inset:0;
+      z-index:80;
+      display:grid;
+      place-items:center;
+    }
+    .contact-modal__backdrop{
+      position:absolute;
+      inset:0;
+      background:rgba(10,18,12,.42);
+      backdrop-filter:blur(2px);
+    }
+    .contact-modal__panel{
+      position:relative;
+      width:min(760px,calc(100vw - 24px));
+      max-height:calc(100vh - 28px);
+      overflow:auto;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F4F8F2 100%);
+      border:1px solid #CFE0CB;
+      border-radius:16px;
+      box-shadow:0 20px 40px rgba(16,17,20,.26);
+      padding:14px;
+    }
+    .contact-modal__head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:8px;
+      border-bottom:1px solid #DFEBDD;
+      padding-bottom:8px;
+    }
+    .contact-modal__head h3{
+      margin:0;
+      font-size:18px;
+      font-family:'Space Grotesk',sans-serif;
+      color:#15331B;
+    }
+    .contact-modal__close{
+      border:1px solid #C8DAC3;
+      border-radius:9px;
+      height:34px;
+      padding:0 12px;
+      background:#fff;
+      color:#184722;
+      font:inherit;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .contact-modal__close:hover{background:#F5FAF2}
+    .contact-modal__body{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .contact-field{
+      border:1px solid #DCE9D8;
+      border-radius:10px;
+      padding:9px 10px;
+      background:#fff;
+      min-height:56px;
+    }
+    .contact-field.full{grid-column:1/-1}
+    .contact-field .k{
+      font-size:11px;
+      color:#607063;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      margin-bottom:4px;
+      font-weight:700;
+    }
+    .contact-field .v{
+      font-size:14px;
+      line-height:1.35;
+      color:#122016;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+    .contact-field .v a{
+      color:#145D2C;
+      font-weight:700;
+      text-decoration:underline;
+      text-underline-offset:2px;
+    }
+
+    @media (max-width:1400px){
+      .toolbar{grid-template-columns:minmax(260px,2fr) repeat(3,minmax(150px,1fr));}
+      .toolbar button{min-width:130px;}
+    }
+    @media (max-width:1100px){
+      .toolbar{
+        grid-template-columns:repeat(2,minmax(220px,1fr));
+        gap:10px;
+      }
+      .toolbar button{width:100%;}
+    }
+    @media (max-width:760px){
+      .app{padding:12px;}
+      .toolbar{
+        grid-template-columns:1fr;
+        gap:8px;
+      }
+      .toolbar input,.toolbar select,.toolbar button{
+        min-height:42px;
+      }
+      .top{
+        align-items:flex-start;
+      }
+      .top h1{
+        font-size:20px;
+        line-height:1.25;
+      }
+      .top p{
+        font-size:12px;
+        line-height:1.35;
+      }
+      .logo{
+        width:100%;
+        max-width:340px;
+        height:78px;
+      }
+      .panel{padding:10px;}
+      thead tr.filter-row th{top:40px;}
+      .col-filter{
+        min-height:32px;
+        font-size:11px;
+        padding:5px 8px;
+      }
+      .channel-multi{
+        grid-template-columns:1fr;
+        min-width:180px;
+      }
+      .contact-modal__panel{
+        width:calc(100vw - 14px);
+        padding:10px;
+      }
+      .contact-modal__body{grid-template-columns:1fr}
+    }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="top"><div class="logo"><img src="data:image/jpeg;base64,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" alt="Apeiron logo" /></div><div><h1>APEIRON BRASIL - Commercial Operations Hub</h1><p>DB-driven lead management focused on action, prioritization, and pipeline progression.</p></div></section>
+  <section class="toolbar">
+    <input id="q" placeholder="Search by name, company, role, lead insight..." />
+    <select id="fStatus"><option value="">Status: all</option></select>
+    <select id="fPrio"><option value="">Priority: all</option></select>
+    <select id="fChannel"><option value="">Channel: all</option></select>
+    <button id="btnOverdue" class="alt">Only overdue</button>
+    <button id="btnExport">Export CSV</button>
+    <button id="btnSaveExcel">Save to Excel</button>
+    <input id="excelFile" type="file" accept=".xlsx" style="display:none" />
+  </section>
+  <section class="kpis" id="kpis"></section>
+  <section class="layout">
+    <div class="panel"><h2>Pipeline (operational view)</h2><div class="kanban" id="kanban"></div><div class="agenda"><h2 style="font-size:16px;margin:0 0 6px">Priority Agenda</h2><div id="agenda"></div></div></div>
+    <div class="panel">
+      <div class="panel-topline">
+        <h2>Operational Base (editable)</h2>
+        <div class="table-mode-switch">
+          <label for="operationalMode">List by</label>
+          <select id="operationalMode">
+            <option value="contacts">Contacts</option>
+            <option value="companies">Companies</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr class="head-row">
+              <th id="hId">ID</th>
+              <th>Company</th>
+              <th id="hName">Name</th>
+              <th id="hRole">Role</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Next Action</th>
+              <th>Date</th>
+              <th>Channel</th>
+              <th>Lead Insight</th>
+              <th>SharePoint</th>
+            </tr>
+            <tr class="filter-row">
+              <th><input id="cfId" class="col-filter" placeholder="Filter" /></th>
+              <th><input id="cfCompany" class="col-filter" placeholder="Filter" /></th>
+              <th><input id="cfName" class="col-filter" placeholder="Filter" /></th>
+              <th><input id="cfRole" class="col-filter" placeholder="Filter" /></th>
+              <th><select id="cfStatus" class="col-filter"><option value="">All</option></select></th>
+              <th><select id="cfPriority" class="col-filter"><option value="">All</option></select></th>
+              <th><input id="cfNextAction" class="col-filter" placeholder="Filter" /></th>
+              <th><input id="cfDate" class="col-filter" placeholder="Filter" /></th>
+              <th><select id="cfChannel" class="col-filter"><option value="">All</option></select></th>
+              <th><input id="cfLeadInsight" class="col-filter" placeholder="Filter" /></th>
+              <th><select id="cfSharePoint" class="col-filter"><option value="">All</option><option value="in">In SharePoint</option><option value="pending">Pending</option></select></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="foot">Changes are automatically saved in this browser on this machine.<span id="syncMsg"></span></div>
+    </div>
+  </section>
+</div>
+<div id="contactModal" class="contact-modal" aria-hidden="true">
+  <div class="contact-modal__backdrop" data-close-modal="true"></div>
+  <section class="contact-modal__panel" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
+    <div class="contact-modal__head">
+      <h3 id="contactModalTitle">Contact Details</h3>
+      <button id="contactModalClose" class="contact-modal__close" type="button" aria-label="Close">Close</button>
+    </div>
+    <div id="contactModalBody" class="contact-modal__body"></div>
+  </section>
+</div>
+<script>
+window.INITIAL_DATA = [{"id": 1, "company": "FORTLEV", "name": "Keylla Mollulo", "role": "REC Share Es Unit", "status": "In Contact", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+LinkedIn", "owner": "Original lead \u2014 generated Fortlev mapping", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "keylla.pm@fortlev.com.br", "phone": "", "linkedin": "linkedin.com/in/keylla-mollulo", "location": "", "department": "HR", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 2, "company": "FORTLEV", "name": "Jose Luis Campos de Faria", "role": "Supply Manager", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Main supply decision maker", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 3, "company": "FORTLEV", "name": "Madson Vidal", "role": "Supply Manager", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "5k followers on LinkedIn \u2014 active on the network", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 4, "company": "FORTLEV", "name": "Richard Antonio Silva", "role": "Corporate Maintenance Manager", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Main maintenance decision maker", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 5, "company": "FORTLEV", "name": "Rogerio", "role": "Maintenance Manager", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 6, "company": "FORTLEV", "name": "Jefferson", "role": "Maintenance Supervisor", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 7, "company": "FORTLEV", "name": "Rafaella Queir\u00f3z Pessotti de Almeida", "role": "Supply Specialist", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "SAP \u2014 Purchasing Strategy", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 8, "company": "FORTLEV", "name": "Daniella Lopes", "role": "Supply Specialist", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "10+ years in Industrial Purchasing", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 9, "company": "FORTLEV", "name": "Robson Dal Col Ribeiro", "role": "Supply Specialist - SAP MM", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "SAP S/4HANA MM \u2014 technical profile", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 10, "company": "FORTLEV", "name": "Pablo Silva", "role": "Maintenance Specialist", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Automation technician", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 11, "company": "FORTLEV", "name": "Franklin Douglas Leal", "role": "Supply Analyst", "status": "Meeting Scheduled", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "In the global spreadsheet (ID 9 and 199) \u2014 prob. 100%", "source": "Apollo+LinkedIn", "sharePointId": "9", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 12, "company": "FORTLEV", "name": "Mariana Branco", "role": "Supply Analyst", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 13, "company": "FORTLEV", "name": "Daniel Pessanha Ribeiro", "role": "PL Supply Analyst", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "SAP MM and FI \u2014 inbound e-procurement", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 14, "company": "FORTLEV", "name": "Braulio Brito", "role": "Full Supply Analyst", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Strategic purchasing \u2014 steel materials", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 15, "company": "FORTLEV", "name": "Lorenza", "role": "Supply Analyst", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 16, "company": "FORTLEV", "name": "Mathews Jos\u00e9 Peixoto de Oliveira", "role": "Maintenance Planning and Control Analyst", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Mechanical Engineer \u2014 PCM", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 17, "company": "FORTLEV", "name": "Nycolle Salles", "role": "Maintenance Engineering", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Mec\u00e2nica Industrial", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 18, "company": "FORTLEV", "name": "Valdiney Soares", "role": "Maintenance Leader", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 19, "company": "FORTLEV", "name": "Luan Batista", "role": "Maintenance Coordinator", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Mechanical engineer \u2014 reliability", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 20, "company": "FORTLEV", "name": "Arthur", "role": "Junior PCM Analyst", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 21, "company": "FORTLEV", "name": "Joao", "role": "Maintenance Electrician", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 22, "company": "FORTLEV", "name": "Gildasio Oliveira", "role": "Industrial Maintenance Leader", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "Sim", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 23, "company": "FORTLEV", "name": "Gildasio Oliveira", "role": "Mechanical Maintenance Leader", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Possible duplicate \u2014 validate", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "Sim", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 24, "company": "FORTLEV", "name": "Filipe", "role": "Storekeeper", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Warehouse", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 25, "company": "FORTLEV", "name": "Phillipp", "role": "Storekeeper", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Warehouse", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 26, "company": "FORTLEV", "name": "Dioneson", "role": "Storekeeper", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "", "source": "Apollo", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Warehouse", "notes": "", "accountSummary": "FORTLEV", "accountSector": "", "accountCityState": "", "accountSize": "", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 27, "company": "AUTVIX", "name": "Marcos Alberto Monfardini Filho", "role": "Owner / Founder", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+Telefone+LinkedIn", "owner": "Founder 2008 \u2014 17 years, ~160 employees, R$9M revenue. Industrial automation, NR-10/12, SCADA. Gustavo Zatta is a direct connection \u2192 hot channel for the 1st meeting.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "marcos@autvix.com.br", "phone": "+55 27 3039-6559", "linkedin": "linkedin.com/in/marcos-alberto-monfardini-filho-26211028", "location": "", "department": "Board", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 28, "company": "AUTVIX", "name": "Jo\u00e3o Milton D. Neto", "role": "Commercial Coordinator", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+LinkedIn", "owner": "Electrical Engineering + MBA Maintenance Management. Autvix commercial entry point. Gustavo has a direct connection \u2014 use it as a warm intro.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "joao.neto@autvix.com.br", "phone": "", "linkedin": "linkedin.com/in/joaomdneto-862785186", "location": "", "department": "Commercial", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 29, "company": "AUTVIX", "name": "Talyson R. Libardi", "role": "Electrical Engineer \u2014 Specialist NR-12", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "CMSE\u00ae \u2014 machine maintenance + safety. Ideal technical profile for Functional Safety and Man Power Support in NR-12 projects.", "source": "LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Security/Projects", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 30, "company": "AUTVIX", "name": "Rafael Silveira", "role": "Project Coordinator", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Machine Safety Specialist, NR-12, Risk Management, Project Coordination. 18 common connections. High adhesion for Functional Safety and Projects.", "source": "LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Projects/Security", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 31, "company": "AUTVIX", "name": "Marcus Stefano Bontia", "role": "Project Coordinator", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "1k followers. Coordination of industrial projects at Autvix. Approach for Man Power Support and Projects.", "source": "LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Projects", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 32, "company": "AUTVIX", "name": "Thales Sperandio", "role": "Supply and Controlling Coordinator", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Supplies and controllership. Engineering services purchasing angle.", "source": "LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Supplies", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 33, "company": "AUTVIX", "name": "Thaiany Antunes", "role": "Full Planning Analyst III", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Planning, Management, Projects, Contracts, Quality, Auditing. Connection with Gustavo Rodrigues (in common).", "source": "LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Planning", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 34, "company": "AUTVIX", "name": "Krystyan Louren\u00e7o da Silva", "role": "Industrial Automation Assistant", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Industrial automation technician. Operating profile \u2014 grip for Man Power Support.", "source": "LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Automation", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 35, "company": "AUTVIX", "name": "Raiane Alves Milanez", "role": "Administrative Analyst", "status": "New", "priority": "Low", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Administrative and accountability analyst. Less adhesion with ICP Apeiron.", "source": "LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "Administrative", "notes": "", "accountSummary": "AUTVIX ENGENHARIA \u2014 Industrial Automation, Serra/ES | ~160 func. | R$9M revenue | autvix.com.br | +55 27 3039-6559", "accountSector": "Industrial Automation", "accountCityState": "Serra/ES", "accountSize": "~160 functions.", "accountRevenue": "R$9M revenue", "accountWebsite": "autvix.com.br", "accountPhone": "+55 27 3039-6559"}, {"id": 36, "company": "SAMARCO", "name": "Hilcker Scopel", "role": "Maintenance Coordinator", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+Telefone+LinkedIn", "owner": "Coord. Maintenance (2025). Before: Eng. Reliability for 6 years. Samarco hub Ubu/Anchieta \u2014 major demander for industrial services. High adhesion.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "hilckersco@samarco.com", "phone": "+55 800 033 8485", "linkedin": "linkedin.com/in/hilcker-scopel-62397052", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "SAMARCO MINERA\u00c7\u00c3O \u2014 Mining/Pelotization, Guarapari/Anchieta, ES | ~3,600 functions. | R$1.3B receita | samarco.com | +55 800 033 8485", "accountSector": "Mining/Pelletization, Guarapari/Anchieta", "accountCityState": "ES", "accountSize": "~3,600 functions.", "accountRevenue": "R$1.3B revenue", "accountWebsite": "samarco.com", "accountPhone": "+55 800 033 8485"}, {"id": 37, "company": "SAMARCO", "name": "Pedro Vieira", "role": "Maintenance Coordinator", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+Telefone+LinkedIn", "owner": "Coord. Maintenance since 2021. Background on pelletization process. Operational decision-maker with a track record of 10+ years at Samarco.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "pedro.vieira@samarco.com", "phone": "+55 800 033 8485", "linkedin": "linkedin.com/in/pedro-paulo-moura-vieira", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "SAMARCO MINERA\u00c7\u00c3O \u2014 Mining/Pelotization, Guarapari/Anchieta, ES | ~3,600 functions. | R$1.3B receita | samarco.com | +55 800 033 8485", "accountSector": "Mining/Pelletization, Guarapari/Anchieta", "accountCityState": "ES", "accountSize": "~3,600 functions.", "accountRevenue": "R$1.3B revenue", "accountWebsite": "samarco.com", "accountPhone": "+55 800 033 8485"}, {"id": 38, "company": "SAMARCO", "name": "Alexandre Kahowec", "role": "Automation and Infrastructure Eng.", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+Telefone+LinkedIn", "owner": "Automation and Infrastructure Eng. (2020). Previously at MCA Auditoria and EPC Engenharia. Ideal technical profile for automation and Functional Safety projects.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "alexandre.kahowec@samarco.com", "phone": "+55 800 033 8485", "linkedin": "linkedin.com/in/avkahowec", "location": "", "department": "Automation/IT", "notes": "", "accountSummary": "SAMARCO MINERA\u00c7\u00c3O \u2014 Mining/Pelotization, Guarapari/Anchieta, ES | ~3,600 functions. | R$1.3B receita | samarco.com | +55 800 033 8485", "accountSector": "Mining/Pelletization, Guarapari/Anchieta", "accountCityState": "ES", "accountSize": "~3,600 functions.", "accountRevenue": "R$1.3B revenue", "accountWebsite": "samarco.com", "accountPhone": "+55 800 033 8485"}, {"id": 39, "company": "SAMARCO", "name": "Alexandre Junior", "role": "Automation Specialist Technician", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "Email+Telefone+LinkedIn", "owner": "Automation Specialist (2022) and SR Automation Technician for 10 years previously. Operational technical profile \u2014 adherence to Man Power Support and Automation Projects.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "alexandre.junior@samarco.com", "phone": "+55 800 033 8485", "linkedin": "linkedin.com/in/alexandre-moure-de-ataide-junior-49273839", "location": "", "department": "Automation", "notes": "", "accountSummary": "SAMARCO MINERA\u00c7\u00c3O \u2014 Mining/Pelotization, Guarapari/Anchieta, ES | ~3,600 functions. | R$1.3B receita | samarco.com | +55 800 033 8485", "accountSector": "Mining/Pelletization, Guarapari/Anchieta", "accountCityState": "ES", "accountSize": "~3,600 functions.", "accountRevenue": "R$1.3B revenue", "accountWebsite": "samarco.com", "accountPhone": "+55 800 033 8485"}, {"id": 44, "company": "LHOIST", "name": "Carlos Rocha", "role": "Industrial Maintenance Coordinator", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+LinkedIn", "owner": "Coord. Industrial Maintenance (2022). Before Coord. Electrical/Automation (2015-2021) and Project Engineer (2006-2015). 26 years in total at Lhoist. Key hiring influencer.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "carlos.rocha@lhoist.com", "phone": "", "linkedin": "linkedin.com/in/carlos-rocha-137a3b1b0", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "LHOIST \u2014 Minera\u00e7\u00e3o/Cal Industrial, ES | ~6,600 func. global | R$4.3B revenue | lhoist.com", "accountSector": "Mining/Industrial Lime", "accountCityState": "ES", "accountSize": "~6,600 func. global", "accountRevenue": "R$4.3B revenue", "accountWebsite": "lhoist.com", "accountPhone": ""}, {"id": 45, "company": "LHOIST", "name": "Celes Junior", "role": "Maintenance Coordinator", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+LinkedIn", "owner": "Coord. Maintenance at Lhoist, Vila Velha. Same level as Carlos Rocha. Approach in parallel to reinforce presence. Industrial maintenance adherence.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "celes.junior@lhoist.com", "phone": "", "linkedin": "linkedin.com/in/celes-junior-018a7b11b", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "LHOIST \u2014 Minera\u00e7\u00e3o/Cal Industrial, ES | ~6,600 func. global | R$4.3B revenue | lhoist.com", "accountSector": "Mining/Industrial Lime", "accountCityState": "ES", "accountSize": "~6,600 func. global", "accountRevenue": "R$4.3B revenue", "accountWebsite": "lhoist.com", "accountPhone": ""}, {"id": 46, "company": "IMETAME", "name": "Ezequiel Castilhoni", "role": "Industrial Project Coordinator", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Telefone+LinkedIn", "owner": "Coord. Industrial Projects since 2019 (former Imetame trainee 2016). Background: CAPEX, construction and assembly, planning. Imetame operates in O&G, mining, energy \u2014 high adherence for Projects and Man Power Support.", "source": "LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "+55 27 3256-0070", "linkedin": "linkedin.com/in/ecastilhoni", "location": "", "department": "Projects", "notes": "", "accountSummary": "IMETAME \u2014 Metalmec\u00e2nica/Industrial, Aracruz, ES | ~3,400 func. | imetame.com.br | +55 27 3256-0070", "accountSector": "Metalmechanics/Industrial, Aracruz", "accountCityState": "ES", "accountSize": "~3,400 func.", "accountRevenue": "imetame.com.br", "accountWebsite": "+55 27 3256-0070", "accountPhone": ""}, {"id": 47, "company": "QUANT SERVICE", "name": "Igor Barbosa", "role": "Industrial Maintenance / Facilities Manager", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+LinkedIn", "owner": "Industrial Maintenance/Facilities Manager at Quant (2022). Before: Babcock Int. Brasil (Maintenance Management 2018-2020) and \u00c1LAMO Engenharia (8 years). Quant is a maintenance outsourcing company \u2014 potential partner and channel for end customers.", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "igor.tozzi@quantservice.com", "phone": "", "linkedin": "linkedin.com/in/igor-tozzi-barbosa-492364120", "location": "", "department": "Maintenance", "notes": "", "accountSummary": "QUANT SERVICE \u2014 Industrial Maintenance Outsourcing, ES | ~1,100 func. | R$176M revenue | quantservice.com", "accountSector": "Industrial Maintenance Outsourcing", "accountCityState": "ES", "accountSize": "~1,100 func.", "accountRevenue": "R$176M revenue", "accountWebsite": "quantservice.com", "accountPhone": ""}, {"id": 48, "company": "FORTLEV SOLAR", "name": "Eduardo Nascimento", "role": "Engineering Manager", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+LinkedIn", "owner": "Lucas", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "eduardo.nascimento@fortlevsolar.com.br", "phone": "", "linkedin": "linkedin.com/in/eduardoanascimento", "location": "", "department": "Engineering", "notes": "Engineering Manager since 2022; former Product Engineer Fortlev Solar (2018). Also a partner at Alvarenga Consultoria. Background in industrial maintenance (Aluminum Profile). Decision maker for installation and engineering projects in the company.", "accountSummary": "FORTLEV SOLAR \u2014 Solar Photovoltaic Energy, Serra, ES | ~260 func. | fortlevsolar.com.br", "accountSector": "Photovoltaic Solar Energy, Serra", "accountCityState": "ES", "accountSize": "~260 func.", "accountRevenue": "fortlevsolar.com.br", "accountWebsite": "", "accountPhone": ""}, {"id": 49, "company": "FORTLEV SOLAR", "name": "Diogo Dallapicula", "role": "Engineering Coordinator", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+LinkedIn", "owner": "Lucas", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "diogo.dallapicula@fortlevsolar.com.br", "phone": "", "linkedin": "linkedin.com/in/diogo-marins-dallapicula", "location": "", "department": "Engineering", "notes": "Coord. Engineering since 2021; former A&G engineer. Focus on Data Science and Power BI in addition to technical coordination. Ideal technical-analytical profile for projects.", "accountSummary": "FORTLEV SOLAR \u2014 Solar Photovoltaic Energy, Serra, ES | ~260 func. | fortlevsolar.com.br", "accountSector": "Photovoltaic Solar Energy, Serra", "accountCityState": "ES", "accountSize": "~260 func.", "accountRevenue": "fortlevsolar.com.br", "accountWebsite": "", "accountPhone": ""}, {"id": 50, "company": "TRIGOMAIS", "name": "Abraao Dantas", "role": "Managing Partner", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Telefone+LinkedIn", "owner": "Lucas", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "+55 27 3218-1411", "linkedin": "linkedin.com/in/abraaodantas", "location": "", "department": "Direction/Management", "notes": "Managing Partner of Trigomais (Serra, ES). Managing partner with total decision-making power. Company with 110 employees. of food deep freezing \u2014 specific industrial equipment (cold rooms, freezing lines, industrial ovens). No Apollo email.", "accountSummary": "WHEAT FOODS \u2014 Food Industry (frozen bread), Serra, ES | ~110 func. | trigomais.com.br | +55 27 3218-1411", "accountSector": "Food Industry (frozen bread), Serra", "accountCityState": "ES", "accountSize": "~110 func.", "accountRevenue": "trigomais.com.br", "accountWebsite": "+55 27 3218-1411", "accountPhone": ""}, {"id": 51, "company": "TRIGOMAIS", "name": "Paulo Sergio", "role": "TEC Supervisor", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "Telefone+LinkedIn", "owner": "Lucas", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "+55 27 3218-1411", "linkedin": "linkedin.com/in/paulo-sergio-210763188", "location": "", "department": "Maintenance/Production", "notes": "TEC Supervisor at Trigomais since September 2017. Food industry with deep-freezing line \u2014 industrial equipment that requires specialized maintenance. No Apollo email; activate via LinkedIn or company phone number.", "accountSummary": "WHEAT FOODS \u2014 Food Industry (frozen bread), Serra, ES | ~110 func. | trigomais.com.br | +55 27 3218-1411", "accountSector": "Food Industry (frozen bread), Serra", "accountCityState": "ES", "accountSize": "~110 func.", "accountRevenue": "trigomais.com.br", "accountWebsite": "+55 27 3218-1411", "accountPhone": ""}, {"id": 52, "company": "BRASIGRAN", "name": "Onair Brasigran", "role": "Maintenance Supervisor", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "LinkedIn", "owner": "Lucas", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "linkedin.com/in/onair-brasigran-5a1626a0", "location": "", "department": "Maintenance", "notes": "Maintenance Supervisor at Brasigran (Serra, ES). No email on Apollo. Company with 840 employees, exports granite to the US, China, Europe. Maintenance of cutting, polishing and extraction machines \u2014 direct ICP.", "accountSummary": "BRASIGRAN \u2014 Granites and Mining, Serra, ES | ~840 func. | brasigran.com.br", "accountSector": "Granites and Mining, Serra", "accountCityState": "ES", "accountSize": "~840 func.", "accountRevenue": "brasigran.com.br", "accountWebsite": "", "accountPhone": ""}, {"id": 53, "company": "BRASIGRAN", "name": "Samuel Araujo", "role": "Head of Innovation Projects", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+LinkedIn", "owner": "Lucas", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "slaraujo@brasigran.com.br", "phone": "", "linkedin": "linkedin.com/in/samuel-araujo-14224195", "location": "", "department": "Projects/Innovation", "notes": "Head of Innovation Projects since Jul/2023; former Production Planning Supervisor (2019-2023). Background: Supply Chain Analyst (Est\u00e9e Lauder) and Operations Supervisor (Tegma). Leads innovation and expansion projects \u2014 decision-maker for engineering suppliers.", "accountSummary": "BRASIGRAN \u2014 Granites and Mining, Serra, ES | ~840 func. | brasigran.com.br", "accountSector": "Granites and Mining, Serra", "accountCityState": "ES", "accountSize": "~840 func.", "accountRevenue": "brasigran.com.br", "accountWebsite": "", "accountPhone": ""}, {"id": 54, "company": "ANDRADE STONES", "name": "Carlos Salviano", "role": "Mining Manager", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+Telefone+LinkedIn", "owner": "Lucas", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "carlos@andradesa.com.br", "phone": "+55 27 2124-1222", "linkedin": "linkedin.com/in/carlos-salviano-28470a120", "location": "", "department": "Operations/Mining", "notes": "Mining Manager since 2006 (20+ years in the company). Before: Industrial Manager (2002-2006). Operates 10 active quarries with heavy Italian machinery \u2014 huge maintenance demands. Email verified. High-level operational decision maker.", "accountSummary": "ANDRADE STONES \u2014 Granites and Ornamental Rocks, Serra, ES | ~85 func. | andradestones.com | +55 27 2124-1222", "accountSector": "Granites and Ornamental Rocks, Serra", "accountCityState": "ES", "accountSize": "~85 func.", "accountRevenue": "andradestones.com", "accountWebsite": "+55 27 2124-1222", "accountPhone": ""}, {"id": 55, "company": "ANDRADE STONES", "name": "Patricia Morellato", "role": "Purchasing Supervisor", "status": "New", "priority": "High", "nextAction": "", "nextActionDate": "", "channel": "Email+Telefone+LinkedIn", "owner": "Lucas", "source": "Apollo+LinkedIn", "sharePointId": "", "possibleDuplicate": "", "email": "patriciamorellato@andradestones.com", "phone": "+55 27 2124-1222", "linkedin": "linkedin.com/in/patricia-morellato-1b85a359", "location": "", "department": "Supplies/Shopping", "notes": "Purchasing Supervisor since 2021; former Logistics Supervisor at Granito Zucchi (7 years). Extensive knowledge of the ornamental stone sector. MRO and services purchasing decision-maker. Verified email \u2014 direct approach.", "accountSummary": "ANDRADE STONES \u2014 Granites and Ornamental Rocks, Serra, ES | ~85 func. | andradestones.com | +55 27 2124-1222", "accountSector": "Granites and Ornamental Rocks, Serra", "accountCityState": "ES", "accountSize": "~85 func.", "accountRevenue": "andradestones.com", "accountWebsite": "+55 27 2124-1222", "accountPhone": ""}, {"id": 56, "company": "GRANLUX", "name": "?? To map", "role": "\u2014 Not found on Apollo \u2014", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Lucas", "source": "LinkedIn (manual)", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "", "notes": "\u26a0\ufe0f No data on Apollo. Manually search LinkedIn: Current Maintenance or Supplies Manager/Coordinator at the company.", "accountSummary": "GranLux \u2014 Granites and Marbles, Serra, ES | granluxgranitos.com.br", "accountSector": "Granites and Marbles, Serra", "accountCityState": "ES", "accountSize": "granluxgranitos.com.br", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 57, "company": "V. MINAS", "name": "?? To map", "role": "\u2014 Not found on Apollo \u2014", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Lucas", "source": "LinkedIn (manual)", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "", "notes": "\u26a0\ufe0f No data on Apollo. Manually search LinkedIn: Current Maintenance or Supplies Manager/Coordinator at the company.", "accountSummary": "V. Minas \u2014 ES Company | manual search required", "accountSector": "ES Company", "accountCityState": "", "accountSize": "manual search required", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 58, "company": "FERTPAR", "name": "?? To map", "role": "\u2014 Not found on Apollo \u2014", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Lucas", "source": "LinkedIn (manual)", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "", "notes": "\u26a0\ufe0f No data on Apollo. Manually search LinkedIn: Current Maintenance or Supplies Manager/Coordinator at the company.", "accountSummary": "Fertpar \u2014 ES Company | manual search required", "accountSector": "ES Company", "accountCityState": "", "accountSize": "manual search required", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 59, "company": "ELKEN", "name": "?? To map", "role": "\u2014 Not found on Apollo \u2014", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Lucas", "source": "LinkedIn (manual)", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "", "notes": "\u26a0\ufe0f No data on Apollo. Manually search LinkedIn: Current Maintenance or Supplies Manager/Coordinator at the company.", "accountSummary": "Elken \u2014 ES Company | manual search required", "accountSector": "ES Company", "accountCityState": "", "accountSize": "manual search required", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 60, "company": "VANTEC", "name": "?? To map", "role": "\u2014 Not found on Apollo \u2014", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Lucas", "source": "LinkedIn (manual)", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "", "notes": "\u26a0\ufe0f No data on Apollo. Manually search LinkedIn: Current Maintenance or Supplies Manager/Coordinator at the company.", "accountSummary": "Vantec \u2014 ES Company | manual search required", "accountSector": "ES Company", "accountCityState": "", "accountSize": "manual search required", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 61, "company": "CICLO RECICLAGEM", "name": "?? To map", "role": "\u2014 Not found on Apollo \u2014", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Lucas", "source": "LinkedIn (manual)", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "", "notes": "\u26a0\ufe0f No data on Apollo. Manually search LinkedIn: Current Maintenance or Supplies Manager/Coordinator at the company.", "accountSummary": "Recycling Cycle \u2014 Industrial Recycling, ES | ciclo.ind.br", "accountSector": "Industrial Recycling", "accountCityState": "ES", "accountSize": "ciclo.ind.br", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 62, "company": "ECOPLAST", "name": "?? To map", "role": "\u2014 Not found on Apollo \u2014", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Lucas", "source": "LinkedIn (manual)", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "", "notes": "\u26a0\ufe0f No data on Apollo. Manually search LinkedIn: Current Maintenance or Supplies Manager/Coordinator at the company.", "accountSummary": "Ecoplast \u2014 Plastics/Recycling, ES | manual search required", "accountSector": "Plastics/Recycling", "accountCityState": "ES", "accountSize": "manual search required", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}, {"id": 63, "company": "RDG", "name": "?? To map", "role": "\u2014 Not found on Apollo \u2014", "status": "New", "priority": "Medium", "nextAction": "", "nextActionDate": "", "channel": "No contact", "owner": "Lucas", "source": "LinkedIn (manual)", "sharePointId": "", "possibleDuplicate": "", "email": "", "phone": "", "linkedin": "", "location": "", "department": "", "notes": "\u26a0\ufe0f No data on Apollo. Manually search LinkedIn: Current Maintenance or Supplies Manager/Coordinator at the company.", "accountSummary": "RDG \u2014 ES Company | manual search required", "accountSector": "ES Company", "accountCityState": "", "accountSize": "manual search required", "accountRevenue": "", "accountWebsite": "", "accountPhone": ""}];
+
+const STORAGE_KEY = "apeiron_ops_hub_en_v1";
+const INITIAL_DATA = window.INITIAL_DATA || [];
+const STATUS = ["New", "In Contact", "Meeting Scheduled", "Proposal Sent", "Client", "Discarded"];
+const PRIORITY = ["High", "Medium", "Low"];
+const CHANNEL_METHODS = ["Email", "Phone", "LinkedIn", "WhatsApp"];
+const COLUMN_FILTER_IDS = [
+  "cfId",
+  "cfCompany",
+  "cfName",
+  "cfRole",
+  "cfStatus",
+  "cfPriority",
+  "cfNextAction",
+  "cfDate",
+  "cfChannel",
+  "cfLeadInsight",
+  "cfSharePoint",
+];
+
+let onlyOverdue = false;
+let operationalMode = "contacts";
+let leads = normalizeLeadChannels(loadData());
+
+function text(v) {
+  return String(v ?? "");
+}
+
+function norm(v) {
+  return text(v).trim().toLowerCase();
+}
+
+function escHtml(v) {
+  return text(v).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+function escAttr(v) {
+  return escHtml(v).replaceAll('"', "&quot;");
+}
+
+function canonicalChannelToken(token) {
+  const t = norm(token);
+  if (!t) return "";
+  if (t.includes("no contact") || t.includes("sem contato")) return "NO_CONTACT";
+  if (t.includes("telefone") || t.includes("phone")) return "Phone";
+  if (t.includes("email") || t.includes("e-mail")) return "Email";
+  if (t.includes("linkedin")) return "LinkedIn";
+  if (t.includes("whatsapp") || t.includes("whats")) return "WhatsApp";
+  return "";
+}
+
+function parseChannelSet(rawValue) {
+  const raw = text(rawValue).trim();
+  if (!raw) return new Set();
+
+  const normalized = raw
+    .replace(/\s*(\+|,|;|\/|\|)\s*/g, ",")
+    .replace(/\s+e\s+/gi, ",")
+    .replace(/\s+and\s+/gi, ",");
+  const tokens = normalized.split(",").map((x) => x.trim()).filter(Boolean);
+  if (!tokens.length) return new Set();
+
+  const out = new Set();
+  for (const tk of tokens) {
+    const canonical = canonicalChannelToken(tk);
+    if (!canonical) continue;
+    if (canonical === "NO_CONTACT") {
+      out.clear();
+      return out;
+    }
+    out.add(canonical);
+  }
+  return out;
+}
+
+function channelSetToStorage(setLike) {
+  const set = new Set(setLike || []);
+  const ordered = CHANNEL_METHODS.filter((m) => set.has(m));
+  return ordered.length ? ordered.join(", ") : "No contact";
+}
+
+function formatChannelLabel(rawValue) {
+  return channelSetToStorage(parseChannelSet(rawValue));
+}
+
+function leadMatchesChannel(lead, selectedChannel) {
+  const desired = canonicalChannelToken(selectedChannel);
+  const current = parseChannelSet(lead.channel);
+  if (!desired || desired === "NO_CONTACT") return current.size === 0;
+  return current.has(desired);
+}
+
+function normalizeLeadChannels(data) {
+  return (data || []).map((lead) => ({ ...lead, channel: formatChannelLabel(lead.channel) }));
+}
+
+function safeUrl(v) {
+  const value = text(v).trim();
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://${value}`;
+}
+
+function detailField(label, value, options = {}) {
+  const raw = text(value).trim();
+  const isFull = options.full ? " full" : "";
+  let rendered = raw ? escHtml(raw) : "Not available";
+  if (raw && options.type === "email") rendered = `<a href="mailto:${escAttr(raw)}">${escHtml(raw)}</a>`;
+  if (raw && options.type === "phone") rendered = `<a href="tel:${escAttr(raw)}">${escHtml(raw)}</a>`;
+  if (raw && options.type === "url") {
+    const href = safeUrl(raw);
+    rendered = `<a href="${escAttr(href)}" target="_blank" rel="noopener noreferrer">${escHtml(raw)}</a>`;
+  }
+  return `<div class="contact-field${isFull}"><div class="k">${escHtml(label)}</div><div class="v">${rendered}</div></div>`;
+}
+
+function getLeadById(id) {
+  return leads.find((l) => Number(l.id) === Number(id)) || null;
+}
+
+function firstNonEmpty(leadsList, key) {
+  for (const item of leadsList) {
+    const value = text(item[key]).trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+function getCompanyLeads(companyName) {
+  const wanted = norm(companyName);
+  return leads.filter((l) => norm(l.company) === wanted);
+}
+
+function companyChannelSummary(companyLeads) {
+  const counts = { Email: 0, Phone: 0, LinkedIn: 0, WhatsApp: 0 };
+  companyLeads.forEach((lead) => {
+    const channels = parseChannelSet(lead.channel);
+    CHANNEL_METHODS.forEach((method) => {
+      if (channels.has(method)) counts[method] += 1;
+    });
+  });
+  return `Email: ${counts.Email} | Phone: ${counts.Phone} | LinkedIn: ${counts.LinkedIn} | WhatsApp: ${counts.WhatsApp}`;
+}
+
+function openCompanyModal(companyName) {
+  const companyLeads = getCompanyLeads(companyName);
+  if (!companyLeads.length) return;
+
+  const modal = document.getElementById("contactModal");
+  const title = document.getElementById("contactModalTitle");
+  const body = document.getElementById("contactModalBody");
+  if (!modal || !title || !body) return;
+
+  const total = companyLeads.length;
+  const inContact = companyLeads.filter((l) => l.status === "In Contact").length;
+  const meetings = companyLeads.filter((l) => l.status === "Meeting Scheduled").length;
+  const highPriority = companyLeads.filter((l) => l.priority === "High").length;
+  const withDirectContact = companyLeads.filter((l) => parseChannelSet(l.channel).size > 0).length;
+  const inSharePoint = companyLeads.filter((l) => text(l.sharePointId).trim() !== "").length;
+
+  title.textContent = `Company Details - ${companyName}`;
+  body.innerHTML = [
+    detailField("Company", companyName),
+    detailField("Total Leads", total),
+    detailField("In Contact", inContact),
+    detailField("Meetings Scheduled", meetings),
+    detailField("High Priority Leads", highPriority),
+    detailField("Leads With Direct Contact", withDirectContact),
+    detailField("Leads In SharePoint", inSharePoint),
+    detailField("Main Contact Phone", firstNonEmpty(companyLeads, "accountPhone") || firstNonEmpty(companyLeads, "phone"), { type: "phone" }),
+    detailField("Website", firstNonEmpty(companyLeads, "accountWebsite"), { type: "url" }),
+    detailField("Sector", firstNonEmpty(companyLeads, "accountSector")),
+    detailField("City / State", firstNonEmpty(companyLeads, "accountCityState")),
+    detailField("Company Size", firstNonEmpty(companyLeads, "accountSize")),
+    detailField("Revenue", firstNonEmpty(companyLeads, "accountRevenue")),
+    detailField("Channel Coverage", companyChannelSummary(companyLeads), { full: true }),
+    detailField("Account Summary", firstNonEmpty(companyLeads, "accountSummary"), { full: true }),
+  ].join("");
+
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function openContactModal(id) {
+  const lead = getLeadById(id);
+  if (!lead) return;
+  const modal = document.getElementById("contactModal");
+  const title = document.getElementById("contactModalTitle");
+  const body = document.getElementById("contactModalBody");
+  if (!modal || !title || !body) return;
+
+  title.textContent = `Contact Details - ${lead.name || "Unnamed contact"}`;
+  body.innerHTML = [
+    detailField("Company", lead.company),
+    detailField("Role", lead.role),
+    detailField("Email", lead.email, { type: "email" }),
+    detailField("Phone", lead.phone, { type: "phone" }),
+    detailField("LinkedIn", lead.linkedin, { type: "url" }),
+    detailField("Location", lead.location),
+    detailField("Department", lead.department),
+    detailField("Status", lead.status),
+    detailField("Priority", lead.priority),
+    detailField("Contact Channel", formatChannelLabel(lead.channel)),
+    detailField("Source", lead.source),
+    detailField("SharePoint ID", lead.sharePointId),
+    detailField("Lead Insight", lead.owner, { full: true }),
+    detailField("Notes", lead.notes, { full: true }),
+  ].join("");
+
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeContactModal() {
+  const modal = document.getElementById("contactModal");
+  if (modal) modal.setAttribute("aria-hidden", "true");
+}
+
+function setMsg(message, color) {
+  const el = document.getElementById("syncMsg");
+  el.textContent = message || "";
+  el.style.color = color || "#1f6d41";
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return INITIAL_DATA;
+}
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+}
+
+function normalizeDate(s) {
+  if (!s) return null;
+  const str = text(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return new Date(`${str}T00:00:00`);
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    const [d, m, y] = str.split("/");
+    return new Date(`${y}-${m}-${d}T00:00:00`);
+  }
+  const dt = new Date(str);
+  return Number.isNaN(dt.valueOf()) ? null : new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+}
+
+function isOverdue(item) {
+  const d = normalizeDate(item.nextActionDate);
+  if (!d) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today && item.status !== "Client";
+}
+
+function fillSelect(selectEl, options, firstLabel) {
+  if (!selectEl) return;
+  selectEl.innerHTML = "";
+  const first = document.createElement("option");
+  first.value = "";
+  first.textContent = firstLabel;
+  selectEl.appendChild(first);
+  options.forEach((value) => {
+    const op = document.createElement("option");
+    op.value = value;
+    op.textContent = value;
+    selectEl.appendChild(op);
+  });
+}
+
+function fillFilters() {
+  fillSelect(document.getElementById("fStatus"), STATUS, "Status: all");
+  fillSelect(document.getElementById("fPrio"), PRIORITY, "Priority: all");
+  const channels = getChannelChoices();
+  fillSelect(document.getElementById("fChannel"), channels, "Channel: all");
+
+  fillSelect(document.getElementById("cfStatus"), STATUS, "All");
+  fillSelect(document.getElementById("cfPriority"), PRIORITY, "All");
+  fillSelect(document.getElementById("cfChannel"), channels, "All");
+}
+
+function getChannelChoices() {
+  return ["No contact", ...CHANNEL_METHODS];
+}
+
+function getColumnFilters() {
+  return {
+    id: norm(document.getElementById("cfId")?.value),
+    company: norm(document.getElementById("cfCompany")?.value),
+    name: norm(document.getElementById("cfName")?.value),
+    role: norm(document.getElementById("cfRole")?.value),
+    status: norm(document.getElementById("cfStatus")?.value),
+    priority: norm(document.getElementById("cfPriority")?.value),
+    nextAction: norm(document.getElementById("cfNextAction")?.value),
+    date: norm(document.getElementById("cfDate")?.value),
+    channel: norm(document.getElementById("cfChannel")?.value),
+    leadInsight: norm(document.getElementById("cfLeadInsight")?.value),
+    sharePoint: norm(document.getElementById("cfSharePoint")?.value),
+  };
+}
+
+function matchesColumnFilters(lead, f) {
+  if (f.id && !norm(lead.id).includes(f.id)) return false;
+  if (f.company && !norm(lead.company).includes(f.company)) return false;
+  if (f.name && !norm(lead.name).includes(f.name)) return false;
+  if (f.role && !norm(lead.role).includes(f.role)) return false;
+  if (f.status && norm(lead.status) !== f.status) return false;
+  if (f.priority && norm(lead.priority) !== f.priority) return false;
+  if (f.nextAction && !norm(lead.nextAction).includes(f.nextAction)) return false;
+  if (f.date && !norm(lead.nextActionDate).includes(f.date)) return false;
+  if (f.channel && !leadMatchesChannel(lead, f.channel)) return false;
+  if (f.leadInsight && !norm(lead.owner).includes(f.leadInsight)) return false;
+
+  const inSharePoint = text(lead.sharePointId).trim() !== "";
+  if (f.sharePoint === "in" && !inSharePoint) return false;
+  if (f.sharePoint === "pending" && inSharePoint) return false;
+
+  return true;
+}
+
+function filtered() {
+  const q = norm(document.getElementById("q").value);
+  const fs = document.getElementById("fStatus").value;
+  const fp = document.getElementById("fPrio").value;
+  const fc = document.getElementById("fChannel").value;
+  const colFilters = getColumnFilters();
+
+  return leads.filter((lead) => {
+    const txt = [lead.name, lead.company, lead.role, lead.owner, lead.nextAction].map((v) => norm(v)).join(" ");
+    if (q && !txt.includes(q)) return false;
+    if (fs && lead.status !== fs) return false;
+    if (fp && lead.priority !== fp) return false;
+    if (fc && !leadMatchesChannel(lead, fc)) return false;
+    if (onlyOverdue && !isOverdue(lead)) return false;
+    if (!matchesColumnFilters(lead, colFilters)) return false;
+    return true;
+  });
+}
+
+function renderKPIs(data) {
+  const kpis = [
+    ["Total Leads", data.length],
+    ["High Priority", data.filter((l) => l.priority === "High").length],
+    ["In Contact", data.filter((l) => l.status === "In Contact").length],
+    ["Meeting Scheduled", data.filter((l) => l.status === "Meeting Scheduled").length],
+    ["In SharePoint", data.filter((l) => text(l.sharePointId).trim() !== "").length],
+    ["No Contact", data.filter((l) => parseChannelSet(l.channel).size === 0).length],
+    ["Overdue Actions", data.filter(isOverdue).length],
+  ];
+
+  document.getElementById("kpis").innerHTML = kpis
+    .map(([title, value]) => `<div class="kpi"><div class="t">${title}</div><div class="v">${value}</div></div>`)
+    .join("");
+}
+
+function pClass(p) {
+  return p === "High" ? "high" : p === "Medium" ? "medium" : "low";
+}
+
+function renderKanban(data) {
+  const box = document.getElementById("kanban");
+  box.innerHTML = "";
+
+  STATUS.forEach((status) => {
+    const arr = data.filter((l) => l.status === status);
+    const lane = document.createElement("div");
+    lane.className = "lane";
+    lane.innerHTML = `<div class="head"><span>${status}</span><span>${arr.length}</span></div><div class="list"></div>`;
+    const list = lane.querySelector(".list");
+
+    arr.slice(0, 40).forEach((l) => {
+      list.insertAdjacentHTML(
+        "beforeend",
+        `<div class="card">
+          <div class="name"><button class="contact-link" type="button" data-open-contact="${escAttr(l.id)}">${escHtml(l.name || "(No name)")}</button> - <button class="company-link" type="button" data-open-company="${escAttr(l.company || "")}">${escHtml(l.company || "")}</button></div>
+          <div class="meta">${escHtml(l.role || "")}</div>
+          <span class="pill ${pClass(l.priority)}">${escHtml(l.priority || "No priority")}</span>
+          <div class="meta" style="margin-top:4px">${l.nextActionDate ? `Next: ${escHtml(l.nextActionDate)}` : "No date"}${isOverdue(l) ? " - OVERDUE" : ""}</div>
+        </div>`
+      );
+    });
+
+    box.appendChild(lane);
+  });
+}
+
+function renderAgenda(data) {
+  const arr = [...data]
+    .filter(isOverdue)
+    .sort((a, b) => text(a.nextActionDate).localeCompare(text(b.nextActionDate)))
+    .slice(0, 12);
+  const el = document.getElementById("agenda");
+
+  el.innerHTML = arr.length
+    ? arr
+        .map(
+          (l) =>
+            `<div class="agenda-item"><strong>${escHtml(l.name)}</strong> - ${escHtml(l.company)} - ${escHtml(
+              l.nextActionDate || "no date"
+            )} - ${escHtml(l.nextAction || "no action")}</div>`
+        )
+        .join("")
+    : '<div class="agenda-item">No overdue actions in current filters.</div>';
+}
+
+function stOpts(selected) {
+  return STATUS.map((s) => `<option ${s === selected ? "selected" : ""}>${s}</option>`).join("");
+}
+
+function prOpts(selected) {
+  return PRIORITY.map((s) => `<option ${s === selected ? "selected" : ""}>${s}</option>`).join("");
+}
+
+function renderChannelEditor(rawValue) {
+  const selected = parseChannelSet(rawValue);
+  return `<div class="channel-multi">${CHANNEL_METHODS.map(
+    (method) =>
+      `<label class="channel-option"><input type="checkbox" data-k="channelMethod" data-method="${method}" ${
+        selected.has(method) ? "checked" : ""
+      } /><span>${method}</span></label>`
+  ).join("")}</div>`;
+}
+
+function parseDateForSort(value) {
+  const d = normalizeDate(value);
+  return d ? d.getTime() : Number.POSITIVE_INFINITY;
+}
+
+function priorityRank(priority) {
+  if (priority === "High") return 0;
+  if (priority === "Medium") return 1;
+  if (priority === "Low") return 2;
+  return 3;
+}
+
+function pickPrimaryLead(groupLeads) {
+  return [...groupLeads].sort((a, b) => {
+    const overdueA = isOverdue(a) ? 0 : 1;
+    const overdueB = isOverdue(b) ? 0 : 1;
+    if (overdueA !== overdueB) return overdueA - overdueB;
+    const prA = priorityRank(a.priority);
+    const prB = priorityRank(b.priority);
+    if (prA !== prB) return prA - prB;
+    const dtA = parseDateForSort(a.nextActionDate);
+    const dtB = parseDateForSort(b.nextActionDate);
+    if (dtA !== dtB) return dtA - dtB;
+    return Number(a.id || 0) - Number(b.id || 0);
+  })[0];
+}
+
+function summarizeNames(groupLeads) {
+  const names = [...new Set(groupLeads.map((l) => text(l.name).trim()).filter(Boolean))];
+  if (!names.length) return "No named contacts";
+  if (names.length <= 2) return names.join(" | ");
+  return `${names.slice(0, 2).join(" | ")} +${names.length - 2} more`;
+}
+
+function summarizeRoles(groupLeads) {
+  const roles = [...new Set(groupLeads.map((l) => text(l.role).trim()).filter(Boolean))];
+  if (!roles.length) return "";
+  if (roles.length <= 2) return roles.join(" | ");
+  return `${roles.slice(0, 2).join(" | ")} +${roles.length - 2} more`;
+}
+
+function buildCompanyRows(data) {
+  const groups = new Map();
+  data.forEach((lead) => {
+    const companyValue = text(lead.company).trim();
+    const key = norm(companyValue) || `__no_company__${lead.id}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(lead);
+  });
+
+  return [...groups.values()].map((groupLeads) => {
+    const primary = pickPrimaryLead(groupLeads);
+    const idsLabel = groupLeads.map((l) => l.id).filter(Boolean).join(", ");
+
+    const unionChannels = new Set();
+    groupLeads.forEach((l) => {
+      parseChannelSet(l.channel).forEach((method) => unionChannels.add(method));
+    });
+
+    const sharePointIds = groupLeads.map((l) => text(l.sharePointId).trim()).filter(Boolean);
+    return {
+      ...primary,
+      id: idsLabel,
+      name: summarizeNames(groupLeads),
+      role: summarizeRoles(groupLeads),
+      channel: channelSetToStorage(unionChannels),
+      sharePointId: sharePointIds[0] || "",
+      _groupLeads: groupLeads,
+      _companyCount: groupLeads.length,
+    };
+  });
+}
+
+function updateOperationalHeaders() {
+  const idHeader = document.getElementById("hId");
+  const nameHeader = document.getElementById("hName");
+  const roleHeader = document.getElementById("hRole");
+  if (!idHeader || !nameHeader || !roleHeader) return;
+
+  if (operationalMode === "companies") {
+    idHeader.textContent = "ID(s)";
+    nameHeader.textContent = "Contacts";
+    roleHeader.textContent = "Roles";
+  } else {
+    idHeader.textContent = "ID";
+    nameHeader.textContent = "Name";
+    roleHeader.textContent = "Role";
+  }
+}
+
+function renderTable(data) {
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = "";
+
+  data.forEach((l) => {
+    const companyGroup = Array.isArray(l._groupLeads) ? l._groupLeads : null;
+    const targetLeads = companyGroup || [l];
+    const rowOverdue = companyGroup ? companyGroup.some(isOverdue) : isOverdue(l);
+    const inSharePointCount = targetLeads.filter((x) => text(x.sharePointId).trim() !== "").length;
+
+    const tr = document.createElement("tr");
+    if (rowOverdue) tr.classList.add("overdue");
+
+    const nameCell = companyGroup
+      ? `<strong>${companyGroup.length} contact${companyGroup.length > 1 ? "s" : ""}</strong><span class="company-subline">${escHtml(
+          l.name || "No named contacts"
+        )}</span>`
+      : `<button class="contact-link" type="button" data-open-contact="${escAttr(l.id)}">${escHtml(l.name || "")}</button>`;
+
+    const sharePointTag =
+      inSharePointCount === 0
+        ? '<span class="tag wait">Pending</span>'
+        : inSharePointCount === targetLeads.length
+          ? '<span class="tag share">In SharePoint</span>'
+          : '<span class="tag wait">Partial</span>';
+
+    tr.innerHTML = `<td>${escHtml(l.id)}</td>
+      <td><button class="company-link" type="button" data-open-company="${escAttr(l.company || "")}">${escHtml(l.company || "")}</button></td>
+      <td>${nameCell}</td>
+      <td>${escHtml(l.role || "")}</td>
+      <td><select class="inline-select" data-k="status">${stOpts(l.status)}</select></td>
+      <td><select class="inline-select" data-k="priority">${prOpts(l.priority)}</select></td>
+      <td><textarea class="inline-textarea" data-k="nextAction">${escHtml(l.nextAction || "")}</textarea></td>
+      <td><input class="inline-input" data-k="nextActionDate" value="${escAttr(l.nextActionDate || "")}" /></td>
+      <td>${renderChannelEditor(l.channel)}</td>
+      <td><textarea class="inline-textarea" data-k="owner">${escHtml(l.owner || "")}</textarea></td>
+      <td>${sharePointTag}</td>`;
+
+    tr.querySelectorAll('[data-k]:not([data-k="channelMethod"])').forEach((inp) =>
+      inp.addEventListener("change", () => {
+        const key = inp.getAttribute("data-k");
+        targetLeads.forEach((lead) => {
+          lead[key] = inp.value;
+        });
+        persist();
+        refresh();
+      })
+    );
+
+    tr.querySelectorAll('[data-k="channelMethod"]').forEach((inp) =>
+      inp.addEventListener("change", () => {
+        const selected = [...tr.querySelectorAll('[data-k="channelMethod"]:checked')].map((cb) => cb.getAttribute("data-method"));
+        targetLeads.forEach((lead) => {
+          lead.channel = channelSetToStorage(selected);
+        });
+        persist();
+        refresh();
+      })
+    );
+
+    tb.appendChild(tr);
+  });
+}
+
+function refresh() {
+  const data = filtered();
+  renderKPIs(data);
+  renderKanban(data);
+  renderAgenda(data);
+  updateOperationalHeaders();
+  const tableData = operationalMode === "companies" ? buildCompanyRows(data) : data;
+  renderTable(tableData);
+}
+
+function exportCsv() {
+  const cols = ["id", "company", "name", "role", "status", "priority", "nextAction", "nextActionDate", "channel", "owner", "source", "sharePointId"];
+  const lines = [cols.join(",")].concat(filtered().map((l) => cols.map((k) => `"${text(l[k]).replaceAll('"', '""')}"`).join(",")));
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "apeiron_operations_en.csv";
+  a.click();
+}
+
+function headerMap(sheet, headerRow) {
+  const map = {};
+  for (let c = 1; c <= 120; c += 1) {
+    const v = sheet.cell(headerRow, c).value();
+    if (v !== undefined && v !== null && text(v).trim() !== "") map[text(v).trim()] = c;
+  }
+  return map;
+}
+
+function findCol(headers, names) {
+  for (const name of names) if (headers[name]) return headers[name];
+  return null;
+}
+
+function setv(sheet, row, col, value) {
+  if (!col) return;
+  sheet.cell(row, col).value(value === undefined || value === null ? "" : value);
+}
+
+function updateById(sheet, headerRow, leadMap) {
+  const headers = headerMap(sheet, headerRow);
+  const idCol = findCol(headers, ["ID"]);
+  if (!idCol) return 0;
+
+  const used = sheet.usedRange();
+  const maxRow = used ? used.endCell().rowNumber() : headerRow + 1;
+  let updated = 0;
+
+  for (let r = headerRow + 1; r <= maxRow; r += 1) {
+    const id = Number(sheet.cell(r, idCol).value());
+    if (!Number.isFinite(id)) continue;
+    const lead = leadMap.get(id);
+    if (!lead) continue;
+    const chSet = parseChannelSet(lead.channel);
+
+    setv(sheet, r, findCol(headers, ["Status"]), lead.status);
+    setv(sheet, r, findCol(headers, ["Priority"]), lead.priority);
+    setv(sheet, r, findCol(headers, ["Channel", "Contact Channel"]), formatChannelLabel(lead.channel));
+    setv(sheet, r, findCol(headers, ["Channel Email"]), chSet.has("Email") ? "Yes" : "");
+    setv(sheet, r, findCol(headers, ["Channel Phone"]), chSet.has("Phone") ? "Yes" : "");
+    setv(sheet, r, findCol(headers, ["Channel LinkedIn"]), chSet.has("LinkedIn") ? "Yes" : "");
+    setv(sheet, r, findCol(headers, ["Channel WhatsApp"]), chSet.has("WhatsApp") ? "Yes" : "");
+    setv(sheet, r, findCol(headers, ["Next Action"]), lead.nextAction);
+    setv(sheet, r, findCol(headers, ["Next Action Date"]), lead.nextActionDate);
+    setv(sheet, r, findCol(headers, ["Lead Insight", "Owner", "Vendedor"]), lead.owner);
+    updated += 1;
+  }
+  return updated;
+}
+
+async function saveToExcel(file) {
+  try {
+    if (!window.XlsxPopulate) {
+      setMsg("Spreadsheet library unavailable.", "#b71c1c");
+      return;
+    }
+    setMsg("Processing file...", "#1f6d41");
+    const arrayBuffer = await file.arrayBuffer();
+    const wb = await XlsxPopulate.fromDataAsync(arrayBuffer);
+    const leadMap = new Map(leads.map((l) => [Number(l.id), l]));
+
+    let updated = 0;
+    const operations = wb.sheet("Leads_Operations") || wb.sheet("Leads_Operacao");
+    if (operations) updated += updateById(operations, 1, leadMap);
+
+    wb.sheets().forEach((sheet) => {
+      const name = sheet.name();
+      if (name && (name.includes("Contacts") || name.includes("Contatos"))) updated += updateById(sheet, 3, leadMap);
+    });
+
+    const out = await wb.outputAsync();
+    if (window.showSaveFilePicker) {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: file.name,
+        types: [
+          {
+            description: "Excel Workbook",
+            accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(out);
+      await writable.close();
+    } else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(out);
+      a.download = file.name.replace(/\.xlsx$/i, "") + "_updated.xlsx";
+      a.click();
+    }
+    setMsg(`Synced successfully (${updated} rows updated).`, "#1e8449");
+  } catch (e) {
+    console.error(e);
+    setMsg("Failed to save to Excel. Please try again.", "#b71c1c");
+  }
+}
+
+function wireUi() {
+  document.getElementById("q").addEventListener("input", refresh);
+  document.getElementById("fStatus").addEventListener("change", refresh);
+  document.getElementById("fPrio").addEventListener("change", refresh);
+  document.getElementById("fChannel").addEventListener("change", refresh);
+  document.getElementById("operationalMode").addEventListener("change", (event) => {
+    operationalMode = event.target.value === "companies" ? "companies" : "contacts";
+    refresh();
+  });
+
+  COLUMN_FILTER_IDS.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("input", refresh);
+    el.addEventListener("change", refresh);
+  });
+
+  document.getElementById("btnOverdue").addEventListener("click", () => {
+    onlyOverdue = !onlyOverdue;
+    document.getElementById("btnOverdue").textContent = onlyOverdue ? "Show all" : "Only overdue";
+    refresh();
+  });
+  document.getElementById("btnExport").addEventListener("click", exportCsv);
+  document.getElementById("btnSaveExcel").addEventListener("click", () => document.getElementById("excelFile").click());
+  document.getElementById("excelFile").addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    await saveToExcel(file);
+    e.target.value = "";
+  });
+
+  document.addEventListener("click", (event) => {
+    const contactTarget = event.target.closest("[data-open-contact]");
+    if (contactTarget) {
+      openContactModal(contactTarget.getAttribute("data-open-contact"));
+      return;
+    }
+
+    const companyTarget = event.target.closest("[data-open-company]");
+    if (companyTarget) {
+      const company = companyTarget.getAttribute("data-open-company");
+      if (text(company).trim()) openCompanyModal(company);
+    }
+  });
+
+  document.getElementById("contactModalClose").addEventListener("click", closeContactModal);
+  document.getElementById("contactModal").addEventListener("click", (event) => {
+    if (event.target && event.target.getAttribute("data-close-modal") === "true") closeContactModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeContactModal();
+  });
+}
+
+fillFilters();
+wireUi();
+refresh();
+
+</script>
+</body>
+</html>
+
+
