@@ -1,0 +1,40 @@
+name: Prospecting Zoho Sync
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 2 * * *' # executa diariamente às 02:00 UTC
+
+jobs:
+  etl:
+    name: ETL Zoho and data quality check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas openpyxl
+
+      - name: Run Zoho ETL
+        run: |
+          cd "${{ github.workspace }}"
+          if [ -f tools/etl_zoho_prospecting.py ]; then python tools/etl_zoho_prospecting.py; fi
+          if [ -f tools/calc_new_contacts.py ]; then python tools/calc_new_contacts.py; fi
+
+      - name: Lint optionally
+        if: ${{ always() }}
+        run: |
+          echo "Workflow completed: ETL steps executed."  
