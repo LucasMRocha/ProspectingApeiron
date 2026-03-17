@@ -1,0 +1,6 @@
+# Git ignore for Prospecting project
+_backup/
+_output/
+dist/
+*.xlsx
+*.log
