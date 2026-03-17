@@ -1,6 +1,6 @@
 const STORAGE_KEY = "apeiron_ops_hub_en_v1";
 const INITIAL_DATA = window.INITIAL_DATA || [];
-const STATUS = ["New", "In Contact", "Meeting Scheduled", "Proposal Sent", "Client", "Discarded"];
+const STATUS = ["New", "In Contact", "Meeting Scheduled"];
 const PRIORITY = ["High", "Medium", "Low"];
 const CHANNEL_METHODS = ["Email", "Phone", "LinkedIn", "WhatsApp"];
 const COLUMN_FILTER_IDS = [
@@ -20,7 +20,7 @@ const COLUMN_FILTER_IDS = [
 let onlyOverdue = false;
 let operationalMode = "contacts";
 let currentPage = 1;
-let pageSize = 25;
+let pageSize = 0;
 let leads = normalizeLeadChannels(loadData());
 
 function text(v) {
@@ -222,11 +222,41 @@ function setMsg(message, color) {
 }
 
 function loadData() {
+  let stored = null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) stored = JSON.parse(raw);
   } catch (_) {}
-  return INITIAL_DATA;
+
+  if (!Array.isArray(stored) || !stored.length) return INITIAL_DATA;
+  if (!Array.isArray(INITIAL_DATA) || !INITIAL_DATA.length) return stored;
+
+  const byIdStored = new Map();
+  stored.forEach((item) => {
+    const id = Number(item?.id);
+    if (Number.isFinite(id)) byIdStored.set(id, item);
+  });
+
+  const merged = INITIAL_DATA.map((base) => {
+    const id = Number(base?.id);
+    if (!Number.isFinite(id)) return base;
+    const local = byIdStored.get(id);
+    if (!local) return base;
+    return { ...base, ...local };
+  });
+
+  const baseIds = new Set(
+    INITIAL_DATA
+      .map((item) => Number(item?.id))
+      .filter((id) => Number.isFinite(id))
+  );
+  stored.forEach((item) => {
+    const id = Number(item?.id);
+    if (!Number.isFinite(id) || baseIds.has(id)) return;
+    merged.push(item);
+  });
+
+  return merged;
 }
 
 function persist() {
@@ -450,7 +480,11 @@ function renderAgenda(data) {
 }
 
 function stOpts(selected) {
-  return STATUS.map((s) => `<option ${s === selected ? "selected" : ""}>${s}</option>`).join("");
+  const selectedValue = text(selected).trim();
+  const options = STATUS.includes(selectedValue) || !selectedValue
+    ? STATUS
+    : [selectedValue, ...STATUS];
+  return options.map((s) => `<option ${s === selectedValue ? "selected" : ""}>${s}</option>`).join("");
 }
 
 function prOpts(selected) {
@@ -517,9 +551,13 @@ function buildCompanyRows(data) {
     groups.get(key).push(lead);
   });
 
-  return [...groups.values()].map((groupLeads) => {
+  const rows = [...groups.values()].map((groupLeads) => {
     const primary = pickPrimaryLead(groupLeads);
-    const idsLabel = groupLeads.map((l) => l.id).filter(Boolean).join(", ");
+    const contactIds = groupLeads
+      .map((l) => Number(l.id))
+      .filter((v) => Number.isFinite(v))
+      .sort((a, b) => a - b);
+    const contactIdsLabel = contactIds.join(", ");
 
     const unionChannels = new Set();
     groupLeads.forEach((l) => {
@@ -529,15 +567,27 @@ function buildCompanyRows(data) {
     const sharePointIds = groupLeads.map((l) => text(l.sharePointId).trim()).filter(Boolean);
     return {
       ...primary,
-      id: idsLabel,
+      id: "",
       name: summarizeNames(groupLeads),
       role: summarizeRoles(groupLeads),
       channel: channelSetToStorage(unionChannels),
       sharePointId: sharePointIds[0] || "",
+      _contactIdsLabel: contactIdsLabel,
       _groupLeads: groupLeads,
       _companyCount: groupLeads.length,
     };
   });
+
+  rows.sort((a, b) => norm(a.company).localeCompare(norm(b.company)));
+  rows.forEach((row, index) => {
+    row.id = `COMP-${String(index + 1).padStart(3, "0")}`;
+  });
+  return rows;
+}
+
+function updateModeClass() {
+  if (!document.body) return;
+  document.body.classList.toggle("mode-companies", operationalMode === "companies");
 }
 
 function updateOperationalHeaders() {
@@ -547,9 +597,9 @@ function updateOperationalHeaders() {
   if (!idHeader || !nameHeader || !roleHeader) return;
 
   if (operationalMode === "companies") {
-    idHeader.textContent = "ID(s)";
-    nameHeader.textContent = "Contacts";
-    roleHeader.textContent = "Roles";
+    idHeader.textContent = "Company ID";
+    nameHeader.textContent = "Contacts Summary";
+    roleHeader.textContent = "Functional Areas";
   } else {
     idHeader.textContent = "ID";
     nameHeader.textContent = "Name";
@@ -574,10 +624,20 @@ function renderTable(data) {
     const nameCell = companyGroup
       ? `<strong>${companyGroup.length} contact${companyGroup.length > 1 ? "s" : ""}</strong><span class="company-subline">${escHtml(
           l.name || "No named contacts"
-        )}</span>`
+        )}</span><span class="company-subline">Contact IDs: ${escHtml(l._contactIdsLabel || "-")}</span>`
       : `<button class="contact-link" type="button" data-open-contact="${escAttr(l.id)}">${escHtml(l.name || "")}</button>${
           duplicateKeySet.has(duplicateKeyForLead(l)) ? '<span class="dup-flag">Possible duplicate</span>' : ""
         }`;
+
+    const nextActionCell = companyGroup
+      ? `<input class="inline-input" data-k="nextAction" value="${escAttr(l.nextAction || "")}" />`
+      : `<textarea class="inline-textarea" data-k="nextAction">${escHtml(l.nextAction || "")}</textarea>`;
+    const channelCell = companyGroup
+      ? `<div class="company-channel">${escHtml(l.channel || "No contact")}</div>`
+      : renderChannelEditor(l.channel);
+    const ownerCell = companyGroup
+      ? `<input class="inline-input" data-k="owner" value="${escAttr(l.owner || "")}" />`
+      : `<textarea class="inline-textarea" data-k="owner">${escHtml(l.owner || "")}</textarea>`;
 
     const sharePointTag =
       inSharePointCount === 0
@@ -592,10 +652,10 @@ function renderTable(data) {
       <td>${escHtml(l.role || "")}</td>
       <td><select class="inline-select" data-k="status">${stOpts(l.status)}</select></td>
       <td><select class="inline-select" data-k="priority">${prOpts(l.priority)}</select></td>
-      <td><textarea class="inline-textarea" data-k="nextAction">${escHtml(l.nextAction || "")}</textarea></td>
+      <td>${nextActionCell}</td>
       <td><input class="inline-input" data-k="nextActionDate" value="${escAttr(l.nextActionDate || "")}" /></td>
-      <td>${renderChannelEditor(l.channel)}</td>
-      <td><textarea class="inline-textarea" data-k="owner">${escHtml(l.owner || "")}</textarea></td>
+      <td>${channelCell}</td>
+      <td>${ownerCell}</td>
       <td>${sharePointTag}</td>`;
 
     tr.querySelectorAll('[data-k]:not([data-k="channelMethod"])').forEach((inp) =>
@@ -642,6 +702,7 @@ function renderPagination(meta) {
 
 function refresh() {
   const data = filtered();
+  updateModeClass();
   renderKPIs(data);
   renderKanban(data);
   renderAgenda(data);
@@ -776,7 +837,7 @@ function wireUi() {
   });
   document.getElementById("rowsPerPage").addEventListener("change", (event) => {
     const value = Number(event.target.value);
-    pageSize = Number.isFinite(value) ? value : 25;
+    pageSize = Number.isFinite(value) ? value : 0;
     currentPage = 1;
     refresh();
   });
