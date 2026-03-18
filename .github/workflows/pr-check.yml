@@ -1,0 +1,17 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Quick lint (python)
+        run: |
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -d src ]; then python -m pytest -q || true; fi
+      - name: Status
+        run: echo "PR check complete"

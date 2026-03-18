@@ -268,19 +268,6 @@
       cursor:pointer;
     }
     .channel-option span{overflow-wrap:anywhere}
-    .company-channel{
-      display:inline-block;
-      padding:5px 9px;
-      border-radius:999px;
-      border:1px solid #CFE0CB;
-      background:#F7FBF5;
-      color:#1E4D1E;
-      font-size:11px;
-      line-height:1.2;
-      font-weight:700;
-      max-width:100%;
-      overflow-wrap:anywhere;
-    }
 
     .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800}
     .tag.share{background:#E7F6ED;color:#1F6D41}
@@ -313,24 +300,6 @@
     .pager-btn:disabled{
       cursor:not-allowed;
       opacity:.5;
-    }
-    body.mode-companies thead tr.filter-row{
-      display:none;
-    }
-    body.mode-companies table{
-      min-width:1320px;
-    }
-    body.mode-companies td{
-      padding-top:7px;
-      padding-bottom:7px;
-    }
-    body.mode-companies .inline-input,
-    body.mode-companies .inline-select{
-      height:32px;
-      min-height:32px;
-    }
-    body.mode-companies .inline-textarea{
-      min-height:42px;
     }
   
 
