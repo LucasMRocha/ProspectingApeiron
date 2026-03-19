@@ -13,7 +13,7 @@ Este repositório gerencia o pipeline de integração de dados Zoho -> dashboard
 ## Setup inicial (executar uma vez)
 
 ```powershell
-cd "C:\Users\LucasMartinsRocha\OneDrive - Apeiron Pte Ltd\Prospecting"
+cd "<path-to-your-workspace>"
 # inicializar repo (já feito):
 # git init
 # criar main/dev (já feito)
