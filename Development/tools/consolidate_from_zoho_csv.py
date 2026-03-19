@@ -3,6 +3,7 @@ import json
 import os
 import re
 import shutil
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -32,6 +33,13 @@ def find_project_root() -> Path:
 
 def norm(v):
     return text(v).lower()
+
+
+def slug(v):
+    raw = text(v).strip().lower()
+    raw = unicodedata.normalize("NFKD", raw)
+    raw = "".join(ch for ch in raw if not unicodedata.combining(ch))
+    return "".join(ch for ch in raw if ch.isalnum())
 
 
 def clean_phone(v):
@@ -196,6 +204,8 @@ def export_leads_js(workbook_path, out_js):
             "accountRevenue": text(d.get("Account_Revenue")),
             "accountWebsite": text(d.get("Account_Website")),
             "accountPhone": text(d.get("Account_Phone")),
+            "accountCnpj": text(d.get("Account_CNPJ")),
+            "accountBrand": text(d.get("Account_Brand") or d.get("Brand")),
         }
         records.append(item)
 
@@ -203,6 +213,22 @@ def export_leads_js(workbook_path, out_js):
     with open(out_js, "w", encoding="utf-8") as f:
         f.write("window.INITIAL_DATA = " + json.dumps(records, ensure_ascii=False) + ";\n")
     return len(records)
+
+
+def dashboard_data_targets(base):
+    candidates = [
+        os.path.join(base, "Development", "src", "dashboard", "data", "leads.js"),
+        os.path.join(base, "src", "dashboard", "data", "leads.js"),
+    ]
+    out = []
+    seen = set()
+    for c in candidates:
+        k = os.path.abspath(c).lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(c)
+    return out
 
 
 def main():
@@ -234,7 +260,7 @@ def main():
     existing_emails = set(det_df.get("Email", pd.Series(dtype=str)).fillna("").astype(str).map(norm))
     existing_emails.discard("")
     existing_keys = set(
-        ops_df.apply(lambda r: f"{norm(r.get('Full Name'))}|{norm(r.get('Company'))}", axis=1).tolist()
+        ops_df.apply(lambda r: f"{slug(r.get('Full Name'))}|{slug(r.get('Company'))}", axis=1).tolist()
     )
 
     z_contacts = pd.read_csv(os.path.join(zoho_dir, "Contacts_2026_03_17.csv"), keep_default_na=False).to_dict("records")
@@ -260,7 +286,7 @@ def main():
             continue
 
         email = norm(rec.get("Email"))
-        key = f"{norm(full)}|{norm(company)}"
+        key = f"{slug(full)}|{slug(company)}"
         if (email and email in existing_emails) or key in existing_keys:
             skipped += 1
             continue
@@ -280,6 +306,7 @@ def main():
         account_state = text(account.get("Billing State") or account.get("Shipping State"))
         account_city_state = ", ".join([x for x in [account_city, account_state] if x])
         account_summary = text(account.get("Description"))
+        account_brand = text(account.get("Account Name") or account.get("Brand"))
         account_sector = text(account.get("Industry"))
         account_size = text(account.get("Employees"))
         account_revenue = text(account.get("Annual Revenue"))
@@ -322,6 +349,7 @@ def main():
         setv(ws_det, r_det, h_det, "Source", source)
         setv(ws_det, r_det, h_det, "Created Date", datetime.now().strftime("%Y-%m-%d"))
         setv(ws_det, r_det, h_det, "Account_Summary", account_summary)
+        setv(ws_det, r_det, h_det, "Account_Brand", account_brand)
         setv(ws_det, r_det, h_det, "Account_Sector", account_sector)
         setv(ws_det, r_det, h_det, "Account_City_State", account_city_state)
         setv(ws_det, r_det, h_det, "Account_Size", account_size)
@@ -350,6 +378,7 @@ def main():
         setv(ws_con, r_con, h_con, "Source", source)
         setv(ws_con, r_con, h_con, "Created Date", datetime.now().strftime("%Y-%m-%d"))
         setv(ws_con, r_con, h_con, "Account_Summary", account_summary)
+        setv(ws_con, r_con, h_con, "Account_Brand", account_brand)
         setv(ws_con, r_con, h_con, "Account_Sector", account_sector)
         setv(ws_con, r_con, h_con, "Account_City_State", account_city_state)
         setv(ws_con, r_con, h_con, "Account_Size", account_size)
@@ -378,8 +407,12 @@ def main():
     inserted_csv = os.path.join(out_dir, "zoho_inserted_rows.csv")
     pd.DataFrame(inserted).to_csv(inserted_csv, index=False)
 
-    leads_js = os.path.join(base, "src", "dashboard", "data", "leads.js")
-    total_dashboard = export_leads_js(wb_path, leads_js)
+    total_dashboard = 0
+    targets = dashboard_data_targets(base)
+    for i, leads_js in enumerate(targets):
+        n = export_leads_js(wb_path, leads_js)
+        if i == 0:
+            total_dashboard = n
 
     report_path = os.path.join(out_dir, "consolidation_report.md")
     with open(report_path, "w", encoding="utf-8") as f:
@@ -391,6 +424,7 @@ def main():
         f.write(f"- skipped_existing: {skipped}\n")
         f.write(f"- inserted_export: `{inserted_csv}`\n")
         f.write(f"- dashboard_rows_after_export: {total_dashboard}\n")
+        f.write(f"- dashboard_targets_exported: {', '.join(targets)}\n")
 
     print("backup:", backup)
     print("inserted:", len(inserted))

@@ -1,25 +1,17 @@
 ﻿const STORAGE_KEY = "apeiron_ops_hub_en_v1";
 const DATA_VERSION_KEY = "apeiron_ops_hub_data_version_v1";
 const VIEW_KEY = "apeiron_ops_hub_view_v6";
-const AUDIT_KEY = "apeiron_ops_hub_audit_v1";
 const AI_PROVIDER_STORAGE = "apeiron_ops_hub_ai_provider_v1";
 const AI_KEY_OPENAI_STORAGE = "apeiron_ops_hub_openai_key_v1";
 const AI_KEY_GEMINI_STORAGE = "apeiron_ops_hub_gemini_key_v1";
 const AI_OPENAI_MODEL = "gpt-4o-mini";
 const AI_GEMINI_MODEL = "gemini-1.5-flash";
-const AI_RUNTIME_HELPER_BASE = "http://127.0.0.1:8011";
-const AI_RUNTIME_HELPER_TIMEOUT_MS = 45000;
 const INITIAL_DATA = window.INITIAL_DATA || [];
 const INITIAL_DATA_VERSION = text(window.INITIAL_DATA_VERSION || "");
-const VALID_ENUMS = Object.freeze({
-  status: Object.freeze(["New", "In Contact", "Meeting Scheduled", "Proposal Sent", "Client", "Discarded"]),
-  priority: Object.freeze(["High", "Medium", "Low"]),
-  channel: Object.freeze(["Email", "Phone", "LinkedIn", "WhatsApp"]),
-});
-const STATUS = VALID_ENUMS.status;
+const STATUS = ["New", "In Contact", "Meeting Scheduled", "Proposal Sent", "Client", "Discarded"];
 const KANBAN_STATUS = STATUS.filter((status) => !["Proposal Sent", "Client", "Discarded"].includes(status));
-const PRIORITY = VALID_ENUMS.priority;
-const CHANNEL_METHODS = VALID_ENUMS.channel;
+const PRIORITY = ["High", "Medium", "Low"];
+const CHANNEL_METHODS = ["Email", "Phone", "LinkedIn", "WhatsApp"];
 const DATA_QUALITY_FILTER_OPTIONS = [
   { value: "missing_contact", label: "Data quality: missing contact info" },
   { value: "missing_cnpj", label: "Data quality: missing CNPJ" },
@@ -51,32 +43,7 @@ const COLUMN_FILTER_IDS = [
   "cfChannel",
   "cfLeadInsight",
 ];
-const VIEW_FILTER_IDS = ["q", "fStatus", "fPrio", "fChannel", "fDataQuality", "fCreatedWindow", ...COLUMN_FILTER_IDS];
-const CRITICAL_FIELDS = ["id", "company", "name", "status", "priority", "createdDate"];
-const VIEW_PRESETS = {
-  prospecting: {
-    operationalMode: "contacts",
-    onlyOverdue: false,
-    filters: { fStatus: "New", fPrio: "", fChannel: "", fDataQuality: "", fCreatedWindow: "last30" },
-  },
-  followup: {
-    operationalMode: "contacts",
-    onlyOverdue: true,
-    filters: { fStatus: "", fPrio: "High", fChannel: "", fDataQuality: "", fCreatedWindow: "" },
-  },
-  data_quality: {
-    operationalMode: "contacts",
-    onlyOverdue: false,
-    filters: { fStatus: "", fPrio: "", fChannel: "", fDataQuality: "missing_company_core", fCreatedWindow: "" },
-  },
-  company_view: {
-    operationalMode: "companies",
-    onlyOverdue: false,
-    filters: { fStatus: "", fPrio: "", fChannel: "", fDataQuality: "", fCreatedWindow: "" },
-  },
-};
-const RANKING_DEFAULT_VISIBLE = 3;
-const DB_SYNC_RETRY_DELAYS_MS = [1000, 2000, 4000];
+const VIEW_FILTER_IDS = ["q", "fStatus", "fPrio", "fChannel", "fDataQuality", ...COLUMN_FILTER_IDS];
 
 let onlyOverdue = false;
 let operationalMode = "contacts";
@@ -102,14 +69,10 @@ let hiddenColumnsByMode = {
 let dbDirty = false;
 let dbFileHandle = null;
 let modalState = { type: "", contactId: null, companyName: "", editing: false };
-let modalSaveInProgress = false;
 let ocrImageFile = null;
 let ocrBusy = false;
 let restoredViewFilters = null;
-let companyRankingExpanded = false;
-let contactRankingExpanded = false;
 let leads = normalizeLeadChannels(normalizeLeadsSchema(loadData()));
-let auditLog = loadAuditLog();
 
 function text(v) {
   return String(v ?? "");
@@ -117,60 +80,6 @@ function text(v) {
 
 function norm(v) {
   return text(v).trim().toLowerCase();
-}
-
-function isValidEnumValue(enumKey, value) {
-  const options = VALID_ENUMS[enumKey] || [];
-  return options.includes(text(value).trim());
-}
-
-function normalizeEnumValue(enumKey, value, fallbackValue = "") {
-  const candidate = text(value).trim();
-  if (isValidEnumValue(enumKey, candidate)) return candidate;
-  return text(fallbackValue).trim();
-}
-
-function normalizeStatusValue(value, fallbackValue = "New") {
-  return normalizeEnumValue("status", value, fallbackValue);
-}
-
-function normalizePriorityValue(value, fallbackValue = "Medium") {
-  return normalizeEnumValue("priority", value, fallbackValue);
-}
-
-function stripHtmlTags(rawValue) {
-  let out = text(rawValue);
-  out = out.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, " ");
-  out = out.replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, " ");
-  out = out.replace(/<!--[\s\S]*?-->/g, " ");
-  out = out.replace(/<\/?[^>]+>/g, " ");
-  return out;
-}
-
-function sanitizeUserInput(rawValue, options = {}) {
-  const multiline = options.multiline === true;
-  let out = stripHtmlTags(rawValue);
-  out = out.replace(/\u0000/g, "");
-  out = out.replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ");
-  out = out.replace(/[<>]/g, " ");
-  if (multiline) {
-    out = out.replace(/\r\n?/g, "\n").replace(/\t/g, " ");
-    out = out.replace(/[ \f\v]+\n/g, "\n").replace(/\n[ \f\v]+/g, "\n");
-    out = out.replace(/\n{3,}/g, "\n\n");
-  } else {
-    out = out.replace(/[\r\n\t]+/g, " ");
-  }
-  out = out.replace(/\s{2,}/g, " ");
-  return out.trim();
-}
-
-function sanitizeModalInputValue(key, rawValue, options = {}) {
-  let out = sanitizeUserInput(rawValue, options);
-  const field = norm(key);
-  if (field.includes("email")) out = out.replace(/["'`<>]/g, "");
-  if (field.includes("linkedin") || field.includes("website")) out = out.replace(/[\s"'`<>]/g, "");
-  if (field.includes("phone")) out = out.replace(/[^\d+()\-\s./]/g, "");
-  return out.trim();
 }
 
 function perfNow() {
@@ -281,11 +190,8 @@ function normalizeLeadChannels(data) {
 function normalizeLeadsSchema(data) {
   return (data || []).map((lead) => ({
     ...lead,
-    status: normalizeStatusValue(lead.status),
-    priority: normalizePriorityValue(lead.priority),
-    channel: formatChannelLabel(lead.channel),
     accountBrand: text(lead.accountBrand || lead.accountMarca || "").trim(),
-    createdDate: text(lead.createdDate || lead.creationDate || lead.createdAt || "").trim() || todayIso(),
+    createdDate: text(lead.createdDate || lead.creationDate || lead.createdAt || "").trim(),
   }));
 }
 
@@ -704,27 +610,16 @@ function updateModalButtons() {
   const btnEdit = document.getElementById("contactModalEdit");
   const btnSave = document.getElementById("contactModalSave");
   const btnCancel = document.getElementById("contactModalCancel");
-  const btnClose = document.getElementById("contactModalClose");
   if (!btnEdit || !btnSave || !btnCancel) return;
   if (!modalState.type) {
     btnEdit.style.display = "none";
     btnSave.style.display = "none";
     btnCancel.style.display = "none";
-    btnSave.textContent = "Save";
-    btnEdit.disabled = false;
-    btnSave.disabled = false;
-    btnCancel.disabled = false;
-    if (btnClose) btnClose.disabled = false;
     return;
   }
   btnEdit.style.display = modalState.editing ? "none" : "inline-flex";
   btnSave.style.display = modalState.editing ? "inline-flex" : "none";
   btnCancel.style.display = modalState.editing ? "inline-flex" : "none";
-  btnSave.textContent = modalSaveInProgress ? "Saving..." : "Save";
-  btnEdit.disabled = modalSaveInProgress;
-  btnSave.disabled = modalSaveInProgress;
-  btnCancel.disabled = modalSaveInProgress;
-  if (btnClose) btnClose.disabled = modalSaveInProgress;
 }
 
 function renderActiveModal() {
@@ -765,7 +660,6 @@ function openContactModal(id) {
 }
 
 function closeContactModal() {
-  if (modalSaveInProgress) return;
   const modal = document.getElementById("contactModal");
   modalState = { type: "", contactId: null, companyName: "", editing: false };
   updateModalButtons();
@@ -787,11 +681,7 @@ function collectModalValues() {
   document.querySelectorAll("[data-modal-key]").forEach((el) => {
     const key = text(el.getAttribute("data-modal-key")).trim();
     if (!key) return;
-    const multiline = text(el.tagName).toUpperCase() === "TEXTAREA";
-    let value = sanitizeModalInputValue(key, el.value, { multiline });
-    if (key === "status") value = normalizeStatusValue(value);
-    if (key === "priority") value = normalizePriorityValue(value);
-    out[key] = value;
+    out[key] = el.value;
   });
   return out;
 }
@@ -859,39 +749,6 @@ function setOcrBusyState(busy) {
   }
   if (addBtn) addBtn.disabled = busy;
   if (fileEl) fileEl.disabled = busy;
-}
-
-async function callAiRuntimeHelper(path, payload = null, timeoutMs = AI_RUNTIME_HELPER_TIMEOUT_MS) {
-  if (typeof fetch !== "function") throw new Error("fetch_not_available");
-  const controller = typeof AbortController === "function" ? new AbortController() : null;
-  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
-  try {
-    const opts = {
-      method: payload ? "POST" : "GET",
-      headers: payload ? { "Content-Type": "application/json" } : undefined,
-      body: payload ? JSON.stringify(payload) : undefined,
-      signal: controller ? controller.signal : undefined,
-    };
-    const resp = await fetch(`${AI_RUNTIME_HELPER_BASE}${path}`, opts);
-    if (!resp.ok) {
-      const body = await resp.text().catch(() => "");
-      throw new Error(`helper_http_${resp.status}:${body.slice(0, 180)}`);
-    }
-    return await resp.json();
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
-
-async function ensureLocalAiRuntime(mode = "ai") {
-  try {
-    const payload = await callAiRuntimeHelper("/prepare", { mode });
-    if (payload && payload.ok) return payload;
-    throw new Error("helper_unexpected_payload");
-  } catch (error) {
-    logPerf("AI helper unavailable", { mode, error: text(error?.message || error) });
-    return null;
-  }
 }
 
 function clearOcrForm(keepImage = false) {
@@ -1938,22 +1795,7 @@ async function runAiFromSelectedImage() {
   setOcrBusyState(true);
   const tStart = perfNow();
   try {
-    setOcrStatus("Preparing local AI runtime...", "#1f6d41");
-    const tRuntimeStart = perfNow();
-    const runtime = await ensureLocalAiRuntime("ai");
-    const tRuntimeEnd = perfNow();
-    if (runtime?.ok) {
-      const started = Array.isArray(runtime.started) ? runtime.started : [];
-      const startedLabel = started.length ? ` Started: ${started.join(", ")}.` : " Runtime already active.";
-      setOcrStatus(`Local runtime ready.${startedLabel} Sending image to OCR API...`, "#1f6d41");
-      logPerf("AI runtime prepare", {
-        mode: "ai",
-        started,
-        totalMs: Math.round(tRuntimeEnd - tRuntimeStart),
-      });
-    } else {
-      setOcrStatus("Runtime helper not reachable. Trying OCR API directly...", "#b36b00");
-    }
+    setOcrStatus("Sending image to local OCR API (port 8008)...", "#1f6d41");
 
     const formData = new FormData();
     formData.append("file", ocrImageFile);
@@ -1965,9 +1807,7 @@ async function runAiFromSelectedImage() {
     try {
       resp = await fetch("http://127.0.0.1:8008/ocr", { method: "POST", body: formData });
     } catch (networkError) {
-      throw new Error(
-        "Local OCR API not reachable (port 8008). Open via OPEN_DASHBOARD.bat to auto-start helper/runtime."
-      );
+      throw new Error("Local OCR API not reachable. Make sure the server is running (port 8008).");
     }
 
     if (!resp.ok) {
@@ -2116,8 +1956,6 @@ function collectOcrChannels() {
 }
 
 function collectOcrFormValues() {
-  const statusValue = normalizeStatusValue(getOcrEl("ocrStatusSelect")?.value, "New");
-  const priorityValue = normalizePriorityValue(getOcrEl("ocrPrioritySelect")?.value, "Medium");
   return {
     name: text(getOcrEl("ocrName")?.value).trim(),
     role: text(getOcrEl("ocrRole")?.value).trim(),
@@ -2129,8 +1967,8 @@ function collectOcrFormValues() {
     website: text(getOcrEl("ocrWebsite")?.value).trim(),
     city: text(getOcrEl("ocrCity")?.value).trim(),
     state: text(getOcrEl("ocrState")?.value).trim(),
-    status: statusValue,
-    priority: priorityValue,
+    status: text(getOcrEl("ocrStatusSelect")?.value).trim() || "New",
+    priority: text(getOcrEl("ocrPrioritySelect")?.value).trim() || "Medium",
     source: text(getOcrEl("ocrSource")?.value).trim() || "Image OCR",
     insight: text(getOcrEl("ocrInsight")?.value).trim(),
     channelSet: collectOcrChannels(),
@@ -2279,8 +2117,8 @@ function buildLeadFromOcr(values) {
     company,
     name,
     role: values.role,
-    status: normalizeStatusValue(values.status, "New"),
-    priority: normalizePriorityValue(values.priority, "Medium"),
+    status: STATUS.includes(values.status) ? values.status : "New",
+    priority: PRIORITY.includes(values.priority) ? values.priority : "Medium",
     createdDate: todayIso(),
     nextAction: "",
     nextActionDate: "",
@@ -2346,10 +2184,6 @@ async function addLeadFromOcrModal() {
       refresh();
       closeOcrModal();
       if (changed) {
-        appendAudit("ocr_merge", {
-          leadIds: text(dupMatch.lead.id),
-          message: `OCR merged into existing contact ${dupMatch.lead.name} (${dupMatch.lead.company}).`,
-        });
         const syncNow = confirm(`Duplicate merged into ID ${dupMatch.lead.id}. Sync this update to DB now?`);
         if (syncNow) {
           await syncChangesToDb();
@@ -2384,10 +2218,6 @@ async function addLeadFromOcrModal() {
   if (!confirmCreate) return;
 
   leads.push(newLead);
-  appendAudit("ocr_create", {
-    leadIds: text(newLead.id),
-    message: `OCR created contact ${newLead.name} (${newLead.company}).`,
-  });
   persist();
   markDbDirty();
   refresh();
@@ -2421,65 +2251,6 @@ function persist() {
   if (INITIAL_DATA_VERSION) localStorage.setItem(DATA_VERSION_KEY, INITIAL_DATA_VERSION);
 }
 
-function loadAuditLog() {
-  try {
-    const raw = localStorage.getItem(AUDIT_KEY);
-    if (!raw) return [];
-    const data = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter((item) => item && typeof item === "object").slice(-5000);
-  } catch (_) {
-    return [];
-  }
-}
-
-function persistAuditLog() {
-  try {
-    localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLog.slice(-5000)));
-  } catch (_) {}
-}
-
-function appendAudit(type, details = {}) {
-  const entry = {
-    at: new Date().toISOString(),
-    type: text(type).trim() || "change",
-    mode: operationalMode,
-    details,
-  };
-  auditLog.push(entry);
-  if (auditLog.length > 5000) auditLog = auditLog.slice(-5000);
-  persistAuditLog();
-}
-
-function exportAuditCsv() {
-  if (!auditLog.length) {
-    setMsg("Audit log is empty.", "#b36b00");
-    return;
-  }
-  const headers = ["at", "type", "mode", "leadIds", "field", "from", "to", "message"];
-  const lines = [headers.join(",")];
-  auditLog.forEach((item) => {
-    const det = item.details || {};
-    const row = [
-      item.at,
-      item.type,
-      item.mode,
-      text(det.leadIds || ""),
-      text(det.field || ""),
-      text(det.from || ""),
-      text(det.to || ""),
-      text(det.message || ""),
-    ].map((v) => `"${text(v).replaceAll('"', '""')}"`);
-    lines.push(row.join(","));
-  });
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `apeiron_audit_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  setMsg(`Audit log exported (${auditLog.length} entries).`, "#1e8449");
-}
-
 function normalizeDate(s) {
   if (!s) return null;
   const str = text(s).trim();
@@ -2490,25 +2261,6 @@ function normalizeDate(s) {
   }
   const dt = new Date(str);
   return Number.isNaN(dt.valueOf()) ? null : new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
-}
-
-function isValidDateText(value) {
-  if (!text(value).trim()) return false;
-  return normalizeDate(value) !== null;
-}
-
-function matchesCreatedWindow(lead, windowKey) {
-  const key = text(windowKey).trim();
-  if (!key) return true;
-  const created = normalizeDate(lead.createdDate);
-  if (!created) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffDays = Math.floor((today.getTime() - created.getTime()) / 86400000);
-  if (key === "last7") return diffDays >= 0 && diffDays <= 7;
-  if (key === "last30") return diffDays >= 0 && diffDays <= 30;
-  if (key === "thisMonth") return created.getFullYear() === today.getFullYear() && created.getMonth() === today.getMonth();
-  return true;
 }
 
 function isOverdue(item) {
@@ -2643,7 +2395,6 @@ function filtered() {
   const fp = document.getElementById("fPrio").value;
   const fc = document.getElementById("fChannel").value;
   const fdq = document.getElementById("fDataQuality")?.value || "";
-  const createdWindow = document.getElementById("fCreatedWindow")?.value || "";
   const colFilters = getColumnFilters();
 
   return leads.filter((lead) => {
@@ -2653,7 +2404,6 @@ function filtered() {
     if (fp && lead.priority !== fp) return false;
     if (fc && !leadMatchesChannel(lead, fc)) return false;
     if (!matchesDataQualityFilter(lead, fdq)) return false;
-    if (!matchesCreatedWindow(lead, createdWindow)) return false;
     if (onlyOverdue && !isOverdue(lead)) return false;
     if (!matchesColumnFilters(lead, colFilters)) return false;
     return true;
@@ -2696,74 +2446,63 @@ function daysUntilDate(dateValue) {
 }
 
 function rankingLabel(score) {
-  if (score >= 70) return "Critical";
-  if (score >= 40) return "High";
-  return "Normal";
+  if (score >= 78) return "Critical";
+  if (score >= 68) return "High";
+  if (score >= 56) return "Medium";
+  return "Low";
 }
 
-function isOpenLead(lead) {
+function rankingScore(lead) {
+  let score = 34;
+  const priority = text(lead.priority).trim();
   const status = text(lead.status).trim();
-  return status !== "Client" && status !== "Discarded";
-}
+  const dueDays = daysUntilDate(lead.nextActionDate);
+  const channelCount = parseChannelSet(lead.channel).size;
 
-function urgencyPointsByDate(dateValue) {
-  const dueDays = daysUntilDate(dateValue);
-  if (!Number.isFinite(dueDays)) return 0;
-  if (dueDays < 0) return 30;
-  if (dueDays <= 3) return 20;
-  return 0;
-}
+  if (priority === "High") score += 28;
+  else if (priority === "Medium") score += 18;
+  else if (priority === "Low") score += 10;
 
-function contactPriorityPoints(priorityValue) {
-  const priority = text(priorityValue).trim();
-  if (priority === "High") return 40;
-  if (priority === "Medium") return 20;
-  if (priority === "Low") return 10;
-  return 0;
-}
+  if (status === "Proposal Sent") score += 16;
+  else if (status === "Meeting Scheduled") score += 13;
+  else if (status === "In Contact") score += 10;
+  else if (status === "New") score += 6;
+  else if (status === "Discarded") score -= 10;
 
-function clampRankingScore(scoreValue) {
-  return Math.max(0, Math.min(99, Number(scoreValue) || 0));
-}
+  if (dueDays < 0) score += 18;
+  else if (Number.isFinite(dueDays) && dueDays <= 3) score += 14;
+  else if (Number.isFinite(dueDays) && dueDays <= 7) score += 11;
+  else if (Number.isFinite(dueDays) && dueDays <= 14) score += 8;
+  else if (Number.isFinite(dueDays)) score += 3;
 
-function scoreCompanyGroup(groupLeads) {
-  const openLeadPoints = (groupLeads?.length || 0) * 5;
-  const hasHighPriority = (groupLeads || []).some((lead) => text(lead.priority).trim() === "High");
-  const nextDate = earliestDateText((groupLeads || []).map((lead) => lead.nextActionDate));
-  const urgency = urgencyPointsByDate(nextDate);
-  const highPriorityPoints = hasHighPriority ? 40 : 0;
-  return clampRankingScore(openLeadPoints + highPriorityPoints + urgency);
-}
+  if (channelCount >= 3) score += 10;
+  else if (channelCount === 2) score += 8;
+  else if (channelCount === 1) score += 5;
+  else score += 1;
 
-function scoreContactLead(lead) {
-  const base = contactPriorityPoints(lead?.priority);
-  const urgency = urgencyPointsByDate(lead?.nextActionDate);
-  return clampRankingScore(base + urgency);
-}
+  if (hasCompanyCnpj(lead)) score += 6;
+  if (text(lead.email).trim() || text(lead.phone).trim() || text(lead.linkedin).trim()) score += 6;
+  if (text(lead.accountSummary).trim()) score += 4;
 
-function setRankingToggleState(buttonEl, expanded, totalCount) {
-  if (!buttonEl) return;
-  if (totalCount <= RANKING_DEFAULT_VISIBLE) {
-    buttonEl.style.display = "none";
-    return;
-  }
-  buttonEl.style.display = "inline-flex";
-  buttonEl.textContent = expanded ? "Show top 3" : "Show all";
+  return Math.max(0, Math.min(99, score));
 }
 
 function renderCompanyRanking(data) {
   const listEl = document.getElementById("companyRankingList");
   const subEl = document.getElementById("companyRankingSub");
-  const toggleEl = document.getElementById("btnCompanyRankingToggle");
   if (!listEl || !subEl) return;
 
-  const activeLeads = (data || []).filter(isOpenLead);
+  const activeLeads = (data || []).filter((lead) => {
+    const status = text(lead.status).trim();
+    return status !== "Client" && status !== "Discarded";
+  });
+
   if (!activeLeads.length) {
     subEl.textContent = "No active companies in current filters";
     listEl.innerHTML = '<div class="ranking-empty">No active records match current filters.</div>';
-    setRankingToggleState(toggleEl, companyRankingExpanded, 0);
     return;
   }
+
   const grouped = new Map();
   activeLeads.forEach((lead) => {
     const companyName = text(lead.company).trim() || "Unnamed Company";
@@ -2774,33 +2513,30 @@ function renderCompanyRanking(data) {
 
   const ranked = [...grouped.values()]
     .map((group) => {
-      const leadsByUrgency = [...group.leads].sort(
-        (a, b) => daysUntilDate(a.nextActionDate) - daysUntilDate(b.nextActionDate) || Number(a.id || 0) - Number(b.id || 0)
-      );
-      const best = leadsByUrgency[0];
+      const leadsByScore = [...group.leads]
+        .map((lead) => ({ lead, score: rankingScore(lead) }))
+        .sort((a, b) => b.score - a.score || daysUntilDate(a.lead.nextActionDate) - daysUntilDate(b.lead.nextActionDate));
+      const best = leadsByScore[0];
       const nextDate = earliestDateText(group.leads.map((lead) => lead.nextActionDate));
       const segment = firstNonEmpty(group.leads, "accountSector") || "-";
       const briefing = firstNonEmpty(group.leads, "accountSummary");
-      const topContact = text(best?.name).trim() || "-";
-      const score = scoreCompanyGroup(group.leads);
+      const topContact = text(best?.lead?.name).trim() || "-";
       return {
         company: group.company,
         contacts: group.leads.length,
         topContact,
         segment,
-        score,
-        label: rankingLabel(score),
+        score: best?.score || 0,
+        label: rankingLabel(best?.score || 0),
         nextDate,
         briefing,
       };
     })
     .sort((a, b) => b.score - a.score || b.contacts - a.contacts || a.company.localeCompare(b.company, "en", { sensitivity: "base" }))
-    .slice(0, 9999);
+    .slice(0, 10);
 
-  const visibleCount = companyRankingExpanded ? ranked.length : Math.min(RANKING_DEFAULT_VISIBLE, ranked.length);
-  subEl.textContent = `${visibleCount} of ${ranked.length} companies shown`;
+  subEl.textContent = `${ranked.length} of ${grouped.size} companies shown`;
   listEl.innerHTML = ranked
-    .slice(0, visibleCount)
     .map(
       (item) => `
       <div class="ranking-item">
@@ -2815,64 +2551,6 @@ function renderCompanyRanking(data) {
       </div>`
     )
     .join("");
-  setRankingToggleState(toggleEl, companyRankingExpanded, ranked.length);
-}
-
-function renderContactRanking(data) {
-  const listEl = document.getElementById("contactRankingList");
-  const subEl = document.getElementById("contactRankingSub");
-  const toggleEl = document.getElementById("btnContactRankingToggle");
-  if (!listEl || !subEl) return;
-
-  const activeLeads = (data || []).filter(isOpenLead);
-  if (!activeLeads.length) {
-    subEl.textContent = "No active contacts in current filters";
-    listEl.innerHTML = '<div class="ranking-empty">No active records match current filters.</div>';
-    setRankingToggleState(toggleEl, contactRankingExpanded, 0);
-    return;
-  }
-
-  const ranked = [...activeLeads]
-    .map((lead) => {
-      const score = scoreContactLead(lead);
-      return {
-        id: lead.id,
-        name: text(lead.name).trim() || "Unnamed Contact",
-        company: text(lead.company).trim() || "-",
-        score,
-        label: rankingLabel(score),
-        nextDate: text(lead.nextActionDate).trim() || "",
-        nextAction: text(lead.nextAction).trim() || "-",
-        priority: text(lead.priority).trim() || "-",
-      };
-    })
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      const dayA = daysUntilDate(a.nextDate);
-      const dayB = daysUntilDate(b.nextDate);
-      if (dayA !== dayB) return dayA - dayB;
-      return a.name.localeCompare(b.name, "en", { sensitivity: "base" });
-    });
-
-  const visibleCount = contactRankingExpanded ? ranked.length : Math.min(RANKING_DEFAULT_VISIBLE, ranked.length);
-  subEl.textContent = `${visibleCount} of ${ranked.length} contacts shown`;
-  listEl.innerHTML = ranked
-    .slice(0, visibleCount)
-    .map(
-      (item) => `
-      <div class="ranking-item">
-        <div>
-          <div class="ranking-company">${escHtml(item.name)}</div>
-          <div class="ranking-meta">Priority: ${escHtml(item.priority)}</div>
-        </div>
-        <div class="ranking-segment">${escHtml(item.company)}</div>
-        <div><span class="rank-badge ${escAttr(item.label.toLowerCase())}">${escHtml(item.label)} ${item.score}</span></div>
-        <div class="ranking-next">Next: ${escHtml(item.nextDate || "-")}</div>
-        <div class="ranking-briefing">${escHtml(item.nextAction || "-")}</div>
-      </div>`
-    )
-    .join("");
-  setRankingToggleState(toggleEl, contactRankingExpanded, ranked.length);
 }
 
 function pClass(p) {
@@ -3495,25 +3173,8 @@ function renderTable(data) {
     tr.querySelectorAll('[data-k]:not([data-k="channelMethod"])').forEach((inp) =>
       inp.addEventListener("change", () => {
         const key = inp.getAttribute("data-k");
-        const previousValues = [...new Set(targetLeads.map((lead) => text(lead[key])))]
-          .filter(Boolean)
-          .join(" | ");
-        const leadIds = targetLeads.map((lead) => lead.id).join(",");
-        let normalizedAuditValue = inp.value;
         targetLeads.forEach((lead) => {
-          let nextValue = inp.value;
-          if (key === "status") nextValue = normalizeStatusValue(nextValue, lead.status || "New");
-          if (key === "priority") nextValue = normalizePriorityValue(nextValue, lead.priority || "Medium");
-          lead[key] = nextValue;
-          normalizedAuditValue = nextValue;
-        });
-        if (key === "status" || key === "priority") inp.value = normalizedAuditValue;
-        appendAudit("inline_edit", {
-          leadIds,
-          field: key,
-          from: previousValues,
-          to: normalizedAuditValue,
-          message: "Inline table edit",
+          lead[key] = inp.value;
         });
         persist();
         markDbDirty();
@@ -3523,17 +3184,9 @@ function renderTable(data) {
 
     tr.querySelectorAll('[data-k="channelMethod"]').forEach((inp) =>
       inp.addEventListener("change", () => {
-        const before = channelSetToStorage(parseChannelSet(targetLeads[0]?.channel));
         const selected = [...tr.querySelectorAll('[data-k="channelMethod"]:checked')].map((cb) => cb.getAttribute("data-method"));
         targetLeads.forEach((lead) => {
           lead.channel = channelSetToStorage(selected);
-        });
-        appendAudit("inline_edit", {
-          leadIds: targetLeads.map((lead) => lead.id).join(","),
-          field: "channel",
-          from: before,
-          to: channelSetToStorage(selected),
-          message: "Inline channel edit",
         });
         persist();
         markDbDirty();
@@ -3565,7 +3218,8 @@ function refresh() {
   const data = filtered();
   renderKPIs(data);
   renderCompanyRanking(data);
-  renderContactRanking(data);
+  renderKanban(data);
+  renderAgenda(data);
   updateOperationalHeaders();
   const tableData = operationalMode === "companies" ? buildCompanyRows(data) : data;
   const sortedRows = applySort(tableData);
@@ -3691,181 +3345,8 @@ function updateById(sheet, headerRow, leadMap, options = {}) {
   return updated + appended;
 }
 
-function isObjectValue(value) {
-  return typeof value === "object" && value !== null;
-}
-
-function formatIsoDate(rawValue) {
-  const dt = normalizeDate(rawValue);
-  return dt ? dt.toISOString().slice(0, 10) : "";
-}
-
-function normalizeTextForPersistence(field, rawValue) {
-  if (rawValue === undefined || rawValue === null) return "";
-  if (isObjectValue(rawValue)) return "";
-  const multiline = field === "notes" || field === "accountSummary";
-  return sanitizeModalInputValue(field, rawValue, { multiline });
-}
-
-function normalizeLeadForPersistence(lead, errors) {
-  const idNum = Number(lead?.id);
-  if (!Number.isFinite(idNum) || idNum <= 0) {
-    errors.push({ id: lead?.id, field: "id", message: "ID must be a positive numeric value for persistence." });
-  }
-
-  const textFields = [
-    "name",
-    "company",
-    "role",
-    "department",
-    "email",
-    "phone",
-    "linkedin",
-    "location",
-    "status",
-    "priority",
-    "channel",
-    "nextAction",
-    "owner",
-    "source",
-    "notes",
-    "accountBrand",
-    "accountSummary",
-    "accountSector",
-    "accountCity",
-    "accountState",
-    "accountCityState",
-    "accountSize",
-    "accountRevenue",
-    "accountWebsite",
-    "accountPhone",
-    "accountCnpj",
-  ];
-
-  const normalized = { ...lead, id: idNum };
-  textFields.forEach((field) => {
-    const raw = lead?.[field];
-    if (isObjectValue(raw)) {
-      errors.push({ id: lead?.id, field, message: "Text field cannot be object/array." });
-    }
-    normalized[field] = normalizeTextForPersistence(field, raw);
-  });
-
-  const statusRaw = normalized.status;
-  const priorityRaw = normalized.priority;
-  if (!isValidEnumValue("status", statusRaw)) {
-    errors.push({ id: lead?.id, field: "status", message: "Status is invalid for persistence." });
-  }
-  if (!isValidEnumValue("priority", priorityRaw)) {
-    errors.push({ id: lead?.id, field: "priority", message: "Priority is invalid for persistence." });
-  }
-  normalized.status = normalizeStatusValue(statusRaw, "New");
-  normalized.priority = normalizePriorityValue(priorityRaw, "Medium");
-  normalized.channel = formatChannelLabel(normalized.channel);
-
-  const createdIso = formatIsoDate(lead?.createdDate);
-  if (!createdIso) {
-    errors.push({ id: lead?.id, field: "createdDate", message: "Created Date must be valid (YYYY-MM-DD)." });
-  }
-  normalized.createdDate = createdIso;
-
-  const nextActionRaw = text(lead?.nextActionDate).trim();
-  if (nextActionRaw) {
-    const nextIso = formatIsoDate(nextActionRaw);
-    if (!nextIso) {
-      errors.push({ id: lead?.id, field: "nextActionDate", message: "Next Action Date must be valid (YYYY-MM-DD)." });
-      normalized.nextActionDate = "";
-    } else {
-      normalized.nextActionDate = nextIso;
-    }
-  } else {
-    normalized.nextActionDate = "";
-  }
-
-  return normalized;
-}
-
-function prepareLeadsForPersistence(data = leads) {
-  const errors = [];
-  const rows = [];
-  const idSet = new Set();
-
-  (data || []).forEach((lead) => {
-    if (!lead || typeof lead !== "object" || Array.isArray(lead)) {
-      errors.push({ id: "", field: "row", message: "Invalid lead record type (must be object)." });
-      return;
-    }
-
-    const normalized = normalizeLeadForPersistence(lead, errors);
-    if (Number.isFinite(normalized.id)) {
-      if (idSet.has(normalized.id)) {
-        errors.push({ id: normalized.id, field: "id", message: "Duplicate ID detected before persistence." });
-      }
-      idSet.add(normalized.id);
-    }
-    rows.push(normalized);
-  });
-
-  return { rows, errors };
-}
-
-function validateCriticalFields(data = leads) {
-  const errors = [];
-  const idSet = new Set();
-  (data || []).forEach((lead) => {
-    const idNum = Number(lead.id);
-    if (!Number.isFinite(idNum) || idNum <= 0) {
-      errors.push({ id: lead.id, field: "id", message: "ID must be a positive number." });
-    } else {
-      if (idSet.has(idNum)) errors.push({ id: idNum, field: "id", message: "Duplicate ID detected." });
-      idSet.add(idNum);
-    }
-    if (!text(lead.company).trim()) errors.push({ id: lead.id, field: "company", message: "Company is required." });
-    if (!text(lead.name).trim()) errors.push({ id: lead.id, field: "name", message: "Name is required." });
-    if (!isValidEnumValue("status", lead.status)) errors.push({ id: lead.id, field: "status", message: "Status is invalid." });
-    if (!isValidEnumValue("priority", lead.priority)) errors.push({ id: lead.id, field: "priority", message: "Priority is invalid." });
-    if (!isValidDateText(lead.createdDate)) errors.push({ id: lead.id, field: "createdDate", message: "Created Date is required and must be valid." });
-    if (text(lead.nextActionDate).trim() && !isValidDateText(lead.nextActionDate)) {
-      errors.push({ id: lead.id, field: "nextActionDate", message: "Next Action Date is invalid." });
-    }
-  });
-  return errors;
-}
-
-function runIntegrityCheck(options = {}) {
-  const errors = validateCriticalFields(leads);
-  const warnings = [];
-  const report = { ok: errors.length === 0, errors, warnings };
-  if (options.silent) return report;
-
-  if (report.ok) {
-    setMsg("Integrity check passed.", "#1e8449");
-  } else {
-    const preview = errors
-      .slice(0, 6)
-      .map((e) => `ID ${e.id || "-"} | ${e.field}: ${e.message}`)
-      .join(" ; ");
-    setMsg(`Integrity check failed (${errors.length} issues). ${preview}`, "#b71c1c");
-  }
-  return report;
-}
-
 async function saveToExcel(file) {
   try {
-    const integrity = runIntegrityCheck({ silent: true });
-    if (!integrity.ok) {
-      setMsg(`Fix critical fields before export (${integrity.errors.length} issues).`, "#b71c1c");
-      return;
-    }
-    const persistence = prepareLeadsForPersistence(leads);
-    if (persistence.errors.length) {
-      const preview = persistence.errors
-        .slice(0, 5)
-        .map((e) => `ID ${e.id || "-"} | ${e.field}: ${e.message}`)
-        .join(" ; ");
-      setMsg(`Fix data types before export (${persistence.errors.length} issues). ${preview}`, "#b71c1c");
-      return;
-    }
     if (!window.XlsxPopulate) {
       setMsg("Spreadsheet library unavailable.", "#b71c1c");
       return;
@@ -3873,7 +3354,7 @@ async function saveToExcel(file) {
     setMsg("Processing file...", "#1f6d41");
     const arrayBuffer = await file.arrayBuffer();
     const wb = await XlsxPopulate.fromDataAsync(arrayBuffer);
-    const leadMap = new Map(persistence.rows.map((l) => [Number(l.id), l]));
+    const leadMap = new Map(leads.map((l) => [Number(l.id), l]));
 
     let updated = 0;
     const operations = wb.sheet("Leads_Operations") || wb.sheet("Leads_Operacao");
@@ -3907,7 +3388,6 @@ async function saveToExcel(file) {
       a.click();
     }
     setMsg(`Synced successfully (${updated} rows updated).`, "#1e8449");
-    appendAudit("excel_export", { message: `Manual Excel export finished (${updated} rows).` });
   } catch (e) {
     console.error(e);
     setMsg("Failed to save to Excel. Please try again.", "#b71c1c");
@@ -3951,45 +3431,16 @@ function formatDbSyncError(error) {
   return (message || name).slice(0, 120);
 }
 
-function isExcelOpenLockError(error) {
-  const msg = `${text(error?.name)} ${text(error?.message)}`.toLowerCase();
-  return msg.includes("locked") || msg.includes("in use") || msg.includes("being used");
-}
-
-function isLockError(error) {
-  const msg = `${text(error?.name)} ${text(error?.message)}`.toLowerCase();
-  return isExcelOpenLockError(error) || msg.includes("permission");
-}
-
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function syncChangesToDb() {
-  const integrity = runIntegrityCheck({ silent: true });
-  if (!integrity.ok) {
-    setMsg(`Fix critical fields before DB sync (${integrity.errors.length} issues).`, "#b71c1c");
-    return false;
-  }
-  const persistence = prepareLeadsForPersistence(leads);
-  if (persistence.errors.length) {
-    const preview = persistence.errors
-      .slice(0, 5)
-      .map((e) => `ID ${e.id || "-"} | ${e.field}: ${e.message}`)
-      .join(" ; ");
-    setMsg(`Fix data types before DB sync (${persistence.errors.length} issues). ${preview}`, "#b71c1c");
-    return false;
-  }
   if (!window.XlsxPopulate || !window.showOpenFilePicker) {
     setMsg("DB sync requires a Chromium browser with file access support.", "#b36b00");
     return false;
   }
 
-  const leadMap = new Map(persistence.rows.map((l) => [Number(l.id), l]));
+  const leadMap = new Map(leads.map((l) => [Number(l.id), l]));
   let lastError = null;
 
-  const maxAttempts = DB_SYNC_RETRY_DELAYS_MS.length + 1;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
       const handle = await ensureDbFileHandle();
       if (!handle) {
@@ -4020,23 +3471,11 @@ async function syncChangesToDb() {
       await writable.write(out);
       await writable.close();
       dbDirty = false;
-      appendAudit("db_sync", { message: `DB updated successfully (${updated} rows).` });
       setMsg(`DB updated successfully (${updated} rows).`, "#1e8449");
       return true;
     } catch (e) {
       lastError = e;
       console.error(e);
-      const retryDelay = DB_SYNC_RETRY_DELAYS_MS[attempt - 1];
-      if (isExcelOpenLockError(e) && Number.isFinite(retryDelay)) {
-        setMsg(
-          `DB file is open in Excel (attempt ${attempt}/${maxAttempts}). Close Excel and retrying in ${Math.round(
-            retryDelay / 1000
-          )}s...`,
-          "#b36b00"
-        );
-        await delay(retryDelay);
-        continue;
-      }
       if (attempt === 1 && dbFileHandle && isRecoverableDbHandleError(e)) {
         dbFileHandle = null;
         setMsg("DB file handle expired. Please select the DB file again...", "#b36b00");
@@ -4046,82 +3485,34 @@ async function syncChangesToDb() {
     }
   }
 
-  if (isExcelOpenLockError(lastError)) {
-    setMsg("DB sync failed because the file is open in Excel. Close Excel and try again.", "#b71c1c");
-    return false;
-  }
   setMsg(`Failed to update DB file (${formatDbSyncError(lastError)}). Changes are still pending.`, "#b71c1c");
   return false;
 }
 
 async function saveModalChanges() {
-  if (!modalState.type || modalSaveInProgress) return;
-  modalSaveInProgress = true;
-  updateModalButtons();
-  try {
-    const confirmSave = confirm("Confirm save these changes?");
-    if (!confirmSave) return;
+  if (!modalState.type) return;
+  const confirmSave = confirm("Confirm save these changes?");
+  if (!confirmSave) return;
 
-    const values = collectModalValues();
-    const editedFields = Object.keys(values);
-    if (modalState.type === "contact") {
-      applyContactModalChanges(values);
-      appendAudit("modal_edit", {
-        leadIds: text(modalState.contactId),
-        field: editedFields.join("|"),
-        message: `Contact modal edit (${editedFields.length} fields).`,
-      });
-    } else if (modalState.type === "company") {
-      const impacted = getCompanyLeads(modalState.companyName).map((lead) => lead.id).join(",");
-      applyCompanyModalChanges(values);
-      appendAudit("modal_edit", {
-        leadIds: impacted,
-        field: editedFields.join("|"),
-        message: `Company modal edit (${editedFields.length} fields).`,
-      });
-    }
-
-    persist();
-    markDbDirty();
-    modalState.editing = false;
-    refresh();
-    renderActiveModal();
-
-    const confirmSync = confirm("Sync these changes to DB now?");
-    if (!confirmSync) {
-      setMsg("Changes saved in dashboard. DB sync pending.", "#b36b00");
-      return;
-    }
-    await syncChangesToDb();
-  } finally {
-    modalSaveInProgress = false;
-    updateModalButtons();
+  const values = collectModalValues();
+  if (modalState.type === "contact") {
+    applyContactModalChanges(values);
+  } else if (modalState.type === "company") {
+    applyCompanyModalChanges(values);
   }
-}
 
-function applyViewPreset(presetKey) {
-  const preset = VIEW_PRESETS[presetKey];
-  if (!preset) {
-    setMsg("Select a valid preset.", "#b36b00");
+  persist();
+  markDbDirty();
+  modalState.editing = false;
+  refresh();
+  renderActiveModal();
+
+  const confirmSync = confirm("Sync these changes to DB now?");
+  if (!confirmSync) {
+    setMsg("Changes saved in dashboard. DB sync pending.", "#b36b00");
     return;
   }
-  operationalMode = preset.operationalMode === "companies" ? "companies" : "contacts";
-  onlyOverdue = preset.onlyOverdue === true;
-
-  const modeEl = document.getElementById("operationalMode");
-  if (modeEl) modeEl.value = operationalMode;
-  document.getElementById("btnOverdue").textContent = onlyOverdue ? "Show all" : "Only overdue";
-
-  const filters = preset.filters || {};
-  Object.entries(filters).forEach(([id, value]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = text(value);
-  });
-  currentPage = 1;
-  refresh();
-  saveViewPreferences(true);
-  appendAudit("preset_apply", { message: `Preset ${presetKey} applied.` });
-  setMsg(`Preset applied: ${presetKey}.`, "#1e8449");
+  await syncChangesToDb();
 }
 
 function resetViewToDefault() {
@@ -4162,7 +3553,6 @@ function resetViewToDefault() {
   currentPage = 1;
   refresh();
   saveViewPreferences(true);
-  appendAudit("view_reset", { message: "View reset to default." });
   setMsg("View reset to default.", "#1e8449");
 }
 
@@ -4189,7 +3579,6 @@ function wireUi() {
   document.getElementById("fPrio").addEventListener("change", refreshFromFirstPage);
   document.getElementById("fChannel").addEventListener("change", refreshFromFirstPage);
   document.getElementById("fDataQuality")?.addEventListener("change", refreshFromFirstPage);
-  document.getElementById("fCreatedWindow")?.addEventListener("change", refreshFromFirstPage);
   document.getElementById("operationalMode").addEventListener("change", (event) => {
     operationalMode = event.target.value === "companies" ? "companies" : "contacts";
     currentPage = 1;
@@ -4225,21 +3614,7 @@ function wireUi() {
     currentPage = 1;
     refresh();
   });
-  document.getElementById("btnCompanyRankingToggle")?.addEventListener("click", () => {
-    companyRankingExpanded = !companyRankingExpanded;
-    refresh();
-  });
-  document.getElementById("btnContactRankingToggle")?.addEventListener("click", () => {
-    contactRankingExpanded = !contactRankingExpanded;
-    refresh();
-  });
   document.getElementById("btnExport").addEventListener("click", exportCsv);
-  document.getElementById("btnExportAudit")?.addEventListener("click", exportAuditCsv);
-  document.getElementById("btnIntegrityCheck")?.addEventListener("click", () => runIntegrityCheck({ silent: false }));
-  document.getElementById("btnApplyPreset")?.addEventListener("click", () => {
-    const preset = document.getElementById("viewPreset")?.value || "";
-    applyViewPreset(preset);
-  });
   document.getElementById("btnSaveView").addEventListener("click", () => saveViewPreferences(false));
   document.getElementById("btnResetView").addEventListener("click", resetViewToDefault);
   const btnColumns = document.getElementById("btnColumns");
@@ -4322,7 +3697,6 @@ function wireUi() {
   const btnCancel = document.getElementById("contactModalCancel");
   if (btnEdit) {
     btnEdit.addEventListener("click", () => {
-      if (modalSaveInProgress) return;
       modalState.editing = true;
       renderActiveModal();
     });
@@ -4334,7 +3708,6 @@ function wireUi() {
   }
   if (btnCancel) {
     btnCancel.addEventListener("click", () => {
-      if (modalSaveInProgress) return;
       modalState.editing = false;
       renderActiveModal();
     });
@@ -4356,12 +3729,11 @@ function wireUi() {
 
   document.getElementById("contactModalClose").addEventListener("click", closeContactModal);
   document.getElementById("contactModal").addEventListener("click", (event) => {
-    if (modalSaveInProgress) return;
     if (event.target && event.target.getAttribute("data-close-modal") === "true") closeContactModal();
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      if (!modalSaveInProgress) closeContactModal();
+      closeContactModal();
       closeOcrModal();
     }
   });

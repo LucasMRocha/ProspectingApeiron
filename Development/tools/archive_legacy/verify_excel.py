@@ -1,3 +1,6 @@
 import pandas as pd
-xl = pd.ExcelFile(r'C:\Users\LucasMartinsRocha\OneDrive - Apeiron Pte Ltd\Prospecting\Apeiron_BR_Gestao_Comercial.xlsx')
+from pathlib import Path
+
+base = Path(__file__).resolve().parents[3]
+xl = pd.ExcelFile(base / 'Apeiron_BR_Gestao_Comercial.xlsx')
 print('sheets', xl.sheet_names)

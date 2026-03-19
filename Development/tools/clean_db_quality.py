@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 from __future__ import annotations
 
 import json
 import shutil
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -32,6 +33,17 @@ def find_project_root() -> Path:
 
 def norm(v):
     return text(v).lower()
+
+
+def slug(v: str) -> str:
+    raw = text(v).strip().lower()
+    raw = unicodedata.normalize("NFKD", raw)
+    raw = "".join(ch for ch in raw if not unicodedata.combining(ch))
+    out = []
+    for ch in raw:
+        if ch.isalnum():
+            out.append(ch)
+    return "".join(out)
 
 
 def to_int(v):
@@ -69,9 +81,33 @@ def mojibake_score(s: str) -> int:
     score += s.count("Ã")
     score += s.count("Â")
     score += s.count("â")
-    score += s.count("ð")
-    score += s.count("�") * 3
-    for tok in ["Ã©", "Ã£", "Ã¡", "Ã³", "Ãº", "Ã§", "â€”", "â€“", "â€œ", "â€"]:
+    score += s.count("Ãƒ")
+    score += s.count("Ã‚")
+    score += s.count("Ã¢")
+    score += s.count("Ã°")
+    score += s.count("ï¿½") * 3
+    for tok in [
+        "ÃƒÂ©",
+        "ÃƒÂ£",
+        "ÃƒÂ¡",
+        "ÃƒÂ³",
+        "ÃƒÂº",
+        "ÃƒÂ§",
+        "Ã©",
+        "Ã£",
+        "Ã¡",
+        "Ã³",
+        "Ãº",
+        "Ã§",
+        "Ã¢â‚¬â€",
+        "Ã¢â‚¬â€œ",
+        "Ã¢â‚¬Å“",
+        "Ã¢â‚¬",
+        "â€”",
+        "â€“",
+        "â€œ",
+        "â€",
+    ]:
         score += s.count(tok) * 2
     return score
 
@@ -79,7 +115,7 @@ def mojibake_score(s: str) -> int:
 def repair_mojibake(s: str) -> str:
     if not s:
         return s
-    if not any(ch in s for ch in ("Ã", "Â", "â", "ð", "�")):
+    if not any(ch in s for ch in ("Ã", "Â", "â", "Ãƒ", "Ã‚", "Ã¢", "Ã°", "ï¿½")):
         return s
 
     candidates = [s]
@@ -88,6 +124,16 @@ def repair_mojibake(s: str) -> str:
             candidates.append(s.encode(enc).decode("utf-8"))
         except Exception:
             pass
+
+    second_pass = []
+    for c in candidates:
+        if any(ch in c for ch in ("Ã", "Â", "â", "ï¿½")):
+            for enc in ("latin1", "cp1252"):
+                try:
+                    second_pass.append(c.encode(enc).decode("utf-8"))
+                except Exception:
+                    pass
+    candidates.extend(second_pass)
 
     best = min(candidates, key=mojibake_score)
     return best if mojibake_score(best) < mojibake_score(s) else s
@@ -204,6 +250,8 @@ def export_leads_js(workbook_path: Path, out_js: Path):
             "accountRevenue": text(d.get("Account_Revenue")),
             "accountWebsite": text(d.get("Account_Website")),
             "accountPhone": text(d.get("Account_Phone")),
+            "accountCnpj": text(d.get("Account_CNPJ")),
+            "accountBrand": text(d.get("Account_Brand") or d.get("Brand")),
         }
         rows.append(item)
 
@@ -212,13 +260,29 @@ def export_leads_js(workbook_path: Path, out_js: Path):
     return len(rows)
 
 
+def dashboard_data_targets(root: Path) -> list[Path]:
+    candidates = [
+        root / "Development" / "src" / "dashboard" / "data" / "leads.js",
+        root / "src" / "dashboard" / "data" / "leads.js",
+    ]
+    out = []
+    seen = set()
+    for p in candidates:
+        key = str(p.resolve()).lower() if p.exists() else str(p).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(p)
+    return out
+
+
 def main():
     root = find_project_root()
     support = root / "Support Files"
     workbook_path = root / "Apeiron_BR_Gestao_Comercial.xlsx"
     backup_dir = support / "_backup"
     out_dir = support / "_output"
-    leads_js = root / "src" / "dashboard" / "data" / "leads.js"
+    leads_targets = dashboard_data_targets(root)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     backup_path = backup_workbook(workbook_path, backup_dir, keep=2)
@@ -241,7 +305,7 @@ def main():
 
     groups = {}
     for iid, row in ops_rows.items():
-        k = f"{norm(ws_ops.cell(row, ops_headers.get('Full Name')).value)}|{norm(ws_ops.cell(row, ops_headers.get('Company')).value)}"
+        k = f"{slug(ws_ops.cell(row, ops_headers.get('Full Name')).value)}|{slug(ws_ops.cell(row, ops_headers.get('Company')).value)}"
         if k == "|":
             continue
         groups.setdefault(k, []).append(iid)
@@ -281,7 +345,11 @@ def main():
     normalized_cells = normalize_text_cells(wb)
 
     wb.save(workbook_path)
-    dashboard_rows = export_leads_js(workbook_path, leads_js)
+    dashboard_rows = 0
+    for idx, target in enumerate(leads_targets):
+        nrows = export_leads_js(workbook_path, target)
+        if idx == 0:
+            dashboard_rows = nrows
 
     report_path = out_dir / "db_quality_cleanup_report.md"
     report_path.write_text(
@@ -300,6 +368,7 @@ def main():
                 f"- deleted_rows_contacts: {deleted_con}",
                 f"- normalized_text_cells: {normalized_cells}",
                 f"- dashboard_rows_after_export: {dashboard_rows}",
+                f"- dashboard_targets_exported: {', '.join(str(p) for p in leads_targets)}",
             ]
         ),
         encoding="utf-8",
@@ -315,3 +384,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

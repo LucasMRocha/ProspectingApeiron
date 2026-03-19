@@ -20,52 +20,22 @@
     <select id="fPrio"><option value="">Priority: all</option></select>
     <select id="fChannel"><option value="">Channel: all</option></select>
     <select id="fDataQuality"><option value="">Data quality: all</option></select>
-    <select id="fCreatedWindow">
-      <option value="">Created: all</option>
-      <option value="last7">Created: last 7 days</option>
-      <option value="last30">Created: last 30 days</option>
-      <option value="thisMonth">Created: this month</option>
-    </select>
-    <select id="viewPreset">
-      <option value="">Preset: custom</option>
-      <option value="prospecting">Preset: prospecting</option>
-      <option value="followup">Preset: follow-up</option>
-      <option value="data_quality">Preset: data quality</option>
-      <option value="company_view">Preset: company view</option>
-    </select>
-    <button id="btnApplyPreset" class="alt" type="button">Apply Preset</button>
     <button id="btnOverdue" class="alt">Only overdue</button>
     <button id="btnExport">Export CSV</button>
-    <button id="btnExportAudit" class="alt" type="button">Export Audit CSV</button>
-    <button id="btnIntegrityCheck" class="alt" type="button">Integrity Check</button>
     <button id="btnSaveExcel">Save to Excel</button>
     <button id="btnImportImage" class="alt" type="button">Import from Image</button>
     <input id="excelFile" type="file" accept=".xlsx" style="display:none" />
   </section>
   <section class="kpis" id="kpis"></section>
-  <section class="ranking-grid">
-    <section class="panel ranking-panel">
-      <div class="ranking-head">
-        <div>
-          <h2>Company Priority Ranking</h2>
-          <div id="companyRankingSub" class="ranking-sub">Top companies to approach first</div>
-        </div>
-        <button id="btnCompanyRankingToggle" class="ranking-toggle" type="button">Show all</button>
-      </div>
-      <div id="companyRankingList" class="ranking-list"></div>
-    </section>
-    <section class="panel ranking-panel">
-      <div class="ranking-head">
-        <div>
-          <h2>Contact Priority Ranking</h2>
-          <div id="contactRankingSub" class="ranking-sub">Top contacts to approach first</div>
-        </div>
-        <button id="btnContactRankingToggle" class="ranking-toggle" type="button">Show all</button>
-      </div>
-      <div id="contactRankingList" class="ranking-list"></div>
-    </section>
+  <section class="panel ranking-panel">
+    <div class="ranking-head">
+      <h2>Company Priority Ranking</h2>
+      <div id="companyRankingSub" class="ranking-sub">Top companies to approach first</div>
+    </div>
+    <div id="companyRankingList" class="ranking-list"></div>
   </section>
   <section class="layout">
+    <div class="panel"><h2>Pipeline (operational view)</h2><div class="kanban" id="kanban"></div><div class="agenda"><h2 style="font-size:16px;margin:0 0 6px">Priority Agenda</h2><div id="agenda"></div></div></div>
     <div class="panel">
       <div class="panel-topline">
         <h2>Operational Base (editable)</h2>

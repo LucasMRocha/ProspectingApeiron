@@ -13,7 +13,7 @@ if not exist "Development\tools\zoho-env.ps1" (
 echo This will update:
 echo   - Apeiron_BR_Gestao_Comercial.xlsx
 echo   - Development\src\dashboard\data\leads.js
-echo   - Development\dist\Prospecting_Dashboard_single_file.html
+echo   - Development\dist\APEIRON_BRASIL_-_Opportunities_Management_single_file.html
 echo.
 set /p CONFIRM=Type YES to continue: 
 if /I not "%CONFIRM%"=="YES" (

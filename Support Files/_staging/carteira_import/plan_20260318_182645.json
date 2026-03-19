@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "created_at": "2026-03-18T18:26:45",
+    "source_label": "CARTEIRA - AREA INDUSTRIAL 2",
+    "source_record_count": 409,
+    "dedupe_existing": false,
+    "approved": false,
+    "source_file": "C:\\Users\\LucasMartinsRocha\\OneDrive - Apeiron Pte Ltd\\Prospecting\\Support Files\\New Contacts\\CARTEIRA - AREA INDUSTRIAL 2.xls revisado.xls",
+    "plan_file": "C:\\Users\\LucasMartinsRocha\\OneDrive - Apeiron Pte Ltd\\Prospecting\\Support Files\\_staging\\carteira_import\\latest_plan.json"
+  },
+  "summary": {
+    "inserts": 0,
+    "updates": 4,
+    "deletions": 0
+  },
+  "inserts": [],
+  "updates": [
+    {
+      "id": 297,
+      "target": "details",
+      "changes": {
+        "Role": "To Map"
+      },
+      "reason": "Enrichment from source company INAPI-IND.NE.DE ACESS.P/IRRIG.LTDA-EPP"
+    },
+    {
+      "id": 297,
+      "target": "operations",
+      "changes": {
+        "Role": "To Map"
+      },
+      "reason": "Enrichment from source company INAPI-IND.NE.DE ACESS.P/IRRIG.LTDA-EPP"
+    },
+    {
+      "id": 395,
+      "target": "details",
+      "changes": {
+        "Role": "To Map"
+      },
+      "reason": "Enrichment from source company TEXTIL HORIZONTE ETIQUETAS LTDA"
+    },
+    {
+      "id": 395,
+      "target": "operations",
+      "changes": {
+        "Role": "To Map"
+      },
+      "reason": "Enrichment from source company TEXTIL HORIZONTE ETIQUETAS LTDA"
+    }
+  ],
+  "deletions": []
+}

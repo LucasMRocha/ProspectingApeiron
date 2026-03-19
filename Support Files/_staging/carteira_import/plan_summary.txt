@@ -1,0 +1,7 @@
+CARTEIRA IMPORT DRY-RUN
+Created at: 2026-03-18T18:26:45
+Source records: 409
+Inserts: 0
+Updates: 4
+Deletions: 0
+Approved: False

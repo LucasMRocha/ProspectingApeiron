@@ -1,7 +1,8 @@
 import os, shutil, datetime, re
 import pandas as pd
+from pathlib import Path
 
-base = r'C:\Users\LucasMartinsRocha\OneDrive - Apeiron Pte Ltd\Prospecting'
+base = str(Path(__file__).resolve().parents[3])
 backup_dir = os.path.join(base, '_backup')
 os.makedirs(backup_dir, exist_ok=True)
 

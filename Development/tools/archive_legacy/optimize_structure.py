@@ -1,6 +1,7 @@
 import pandas as pd, os
+from pathlib import Path
 
-base = r'C:\Users\LucasMartinsRocha\OneDrive - Apeiron Pte Ltd\Prospecting'
+base = str(Path(__file__).resolve().parents[3])
 wb = os.path.join(base, 'Apeiron_BR_Gestao_Comercial.xlsx')
 
 contatos = pd.read_csv(os.path.join(base, '_output', 'contatos_final.csv'))

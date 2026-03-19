@@ -1,0 +1,10 @@
+{
+  "applied_at": "2026-03-18T18:27:16",
+  "plan_path": "C:\\Users\\LucasMartinsRocha\\OneDrive - Apeiron Pte Ltd\\Prospecting\\Support Files\\_staging\\carteira_import\\latest_plan.json",
+  "undo_snapshot": "C:\\Users\\LucasMartinsRocha\\OneDrive - Apeiron Pte Ltd\\Prospecting\\Support Files\\_staging\\carteira_import\\_undo\\Apeiron_BR_Gestao_Comercial_preimport_20260318_182714.xlsx",
+  "applied_updates": 4,
+  "applied_inserts": 0,
+  "applied_deletions": 0,
+  "skipped_deletions": 0,
+  "deletion_decisions": []
+}

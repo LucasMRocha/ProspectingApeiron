@@ -117,27 +117,10 @@
     .kpi .t{font-size:12px;color:var(--brand-muted)}
     .kpi .v{font-size:27px;font-weight:800;line-height:1.05;margin-top:2px;color:var(--brand-ink)}
 
-    .ranking-grid{
-      margin-top:12px;
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:12px;
-    }
-    .panel.ranking-panel{
-      margin-top:0;
-      padding-top:10px;
-      background:linear-gradient(180deg,#FFFFFF 0%, #F6F9F5 100%);
-      border-color:var(--line);
-      color:var(--brand-ink);
-      box-shadow:var(--shadow);
-    }
-    .panel.ranking-panel h2{
-      color:#152017;
-      border-left-color:#6ABF4B;
-    }
+    .ranking-panel{margin-top:12px;padding-top:10px}
     .ranking-head{
       display:flex;
-      align-items:center;
+      align-items:flex-end;
       justify-content:space-between;
       gap:10px;
       margin-bottom:8px;
@@ -145,27 +128,13 @@
     .ranking-head h2{margin:2px 0}
     .ranking-sub{
       font-size:12px;
-      color:#6D756F;
+      color:var(--brand-muted);
       font-weight:700;
     }
-    .ranking-toggle{
-      height:32px;
-      border-radius:9px;
-      border:1px solid #6ABF4B;
-      background:#fff;
-      color:#1B4D10;
-      font:inherit;
-      font-size:12px;
-      font-weight:700;
-      padding:0 11px;
-      cursor:pointer;
-      flex:0 0 auto;
-    }
-    .ranking-toggle:hover{background:#F2FAEE}
     .ranking-list{
       border:1px solid var(--line);
       border-radius:12px;
-      background:#fff;
+      background:#FBFDFB;
       overflow:hidden;
     }
     .ranking-item{
@@ -173,40 +142,40 @@
       grid-template-columns:minmax(260px,2fr) minmax(130px,1fr) minmax(120px,0.7fr) minmax(120px,0.8fr) minmax(180px,1.6fr);
       gap:10px;
       align-items:center;
-      padding:10px 12px;
-      border-bottom:1px solid #E6EDE4;
+      padding:9px 10px;
+      border-bottom:1px solid #E4ECE2;
     }
     .ranking-item:last-child{border-bottom:none}
     .ranking-company{font-weight:800;color:#102214}
-    .ranking-meta{font-size:12px;color:#6D756F;line-height:1.35}
-    .ranking-segment{font-size:13px;color:#214228;line-height:1.35}
+    .ranking-meta{font-size:12px;color:#6D756F}
+    .ranking-segment{font-size:13px;color:#214228}
     .rank-badge{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      padding:4px 10px;
+      padding:3px 10px;
       border-radius:999px;
       font-size:12px;
       font-weight:800;
       border:1px solid transparent;
       width:max-content;
     }
-    .rank-badge.critical{background:#FDECEC;color:#B83A2B;border-color:#F2BEB7}
-    .rank-badge.high{background:#FFF3E1;color:#A46510;border-color:#F0D5AB}
-    .rank-badge.normal{background:#EAF8EB;color:#2A7B42;border-color:#BFE2C6}
-    .ranking-next{font-size:13px;color:#1E4E2C;font-weight:700}
-    .ranking-briefing{font-size:13px;color:#1F2A21;line-height:1.4}
+    .rank-badge.critical{background:#FDECEC;color:#982C20;border-color:#EFBAB4}
+    .rank-badge.high{background:#FFF3E1;color:#9A600E;border-color:#ECD2A6}
+    .rank-badge.medium{background:#EAF8EB;color:#1E6E3F;border-color:#BBE1C3}
+    .rank-badge.low{background:#EEF2F1;color:#53635B;border-color:#D0D9D4}
+    .ranking-next{font-size:13px;color:#2A4D31;font-weight:700}
+    .ranking-briefing{font-size:13px;color:#1F2A21}
     .ranking-empty{
       padding:12px;
       font-size:13px;
-      color:#6D756F;
+      color:var(--brand-muted);
       border-top:1px dashed #D7E1D5;
     }
 
     .layout{margin-top:12px;display:grid;grid-template-columns:1fr;gap:12px}
     @media (max-width:1240px){.toolbar{grid-template-columns:1fr 1fr}}
     @media (max-width:980px){
-      .ranking-grid{grid-template-columns:1fr}
       .ranking-item{
         grid-template-columns:1fr;
         gap:4px;
@@ -1095,27 +1064,4 @@
       .ocr-modal__btn{
         min-width:120px;
       }
-    }
-
-    /* ---- phase: toolbar expansion for presets/audit/integrity ---- */
-    .toolbar{
-      grid-template-columns: minmax(280px, 2.4fr) repeat(13, minmax(130px, 1fr));
-    }
-    .toolbar #q{
-      grid-column: span 3;
-    }
-    #fStatus,#fPrio,#fChannel,#fDataQuality,#fCreatedWindow,#viewPreset{
-      font-size:13px;
-    }
-    @media (max-width:1700px){
-      .toolbar{
-        grid-template-columns:minmax(280px,2.2fr) repeat(6,minmax(150px,1fr));
-      }
-      .toolbar #q{grid-column:span 2;}
-    }
-    @media (max-width:1180px){
-      .toolbar{
-        grid-template-columns:repeat(3,minmax(180px,1fr));
-      }
-      .toolbar #q{grid-column:1/-1;}
     }

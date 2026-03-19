@@ -1,7 +1,8 @@
 import pandas as pd
 from openpyxl import load_workbook
+from pathlib import Path
 
-base = r'C:\Users\LucasMartinsRocha\OneDrive - Apeiron Pte Ltd\Prospecting'
+base = str(Path(__file__).resolve().parents[3])
 file_path = base + '\\Apeiron_BR_Gestao_Comercial.xlsx'
 
 empresas = pd.read_csv(base + '\\_output\\empresas_final.csv')

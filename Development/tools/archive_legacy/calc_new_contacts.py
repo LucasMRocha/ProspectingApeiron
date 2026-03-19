@@ -1,5 +1,7 @@
 import pandas as pd, os, re
-base = r'C:\Users\LucasMartinsRocha\OneDrive - Apeiron Pte Ltd\Prospecting'
+from pathlib import Path
+
+base = str(Path(__file__).resolve().parents[3])
 # Try CRM_Master first, then fallback to legacy sheet
 try:
     cont_existing = pd.read_excel(os.path.join(base,'Apeiron_BR_Gestao_Comercial.xlsx'), sheet_name='CRM_Master')

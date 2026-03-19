@@ -1,6 +1,7 @@
 import os, pandas as pd, re
+from pathlib import Path
 
-base = r'C:\Users\LucasMartinsRocha\OneDrive - Apeiron Pte Ltd\Prospecting'
+base = str(Path(__file__).resolve().parents[3])
 wb = os.path.join(base, 'Apeiron_BR_Gestao_Comercial.xlsx')
 
 master_sheet = 'CRM_Master'
