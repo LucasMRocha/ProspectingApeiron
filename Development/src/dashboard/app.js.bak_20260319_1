@@ -77,12 +77,6 @@ const VIEW_PRESETS = {
 };
 const RANKING_DEFAULT_VISIBLE = 3;
 const DB_SYNC_RETRY_DELAYS_MS = [1000, 2000, 4000];
-const URL_PARAMS = new URLSearchParams(window.location.search || "");
-const LAUNCHER_TAG = String(URL_PARAMS.get("launcher") || "").trim().toLowerCase();
-const LAUNCHER_DIR_HINT = String(URL_PARAMS.get("launcherDir") || "").trim();
-const DB_PICKER_SCOPE_RAW = LAUNCHER_TAG || LAUNCHER_DIR_HINT || "default";
-const DB_PICKER_SCOPE = DB_PICKER_SCOPE_RAW.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "default";
-const DB_PICKER_ID = "apeiron-db-picker-" + DB_PICKER_SCOPE;
 
 let onlyOverdue = false;
 let operationalMode = "contacts";
@@ -3970,8 +3964,6 @@ async function saveToExcel(file) {
     const out = await wb.outputAsync();
     if (window.showSaveFilePicker) {
       const handle = await window.showSaveFilePicker({
-        id: DB_PICKER_ID,
-        startIn: dbFileHandle || LAUNCHER_DIR_HINT || "documents",
         suggestedName: file.name,
         types: [
           {
@@ -4000,26 +3992,15 @@ async function saveToExcel(file) {
 async function ensureDbFileHandle() {
   if (dbFileHandle) return dbFileHandle;
   if (!window.showOpenFilePicker) return null;
-  const pickerOptions = {
-    id: DB_PICKER_ID,
+  const handles = await window.showOpenFilePicker({
     multiple: false,
-    startIn: LAUNCHER_DIR_HINT || "documents",
     types: [
       {
         description: "Excel Workbook",
         accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] },
       },
     ],
-  };
-  let handles;
-  try {
-    handles = await window.showOpenFilePicker(pickerOptions);
-  } catch (error) {
-    const canRetryWithFallback = !!LAUNCHER_DIR_HINT && String(error?.name || "").includes("TypeError");
-    if (!canRetryWithFallback) throw error;
-    pickerOptions.startIn = "documents";
-    handles = await window.showOpenFilePicker(pickerOptions);
-  }
+  });
   dbFileHandle = handles && handles[0] ? handles[0] : null;
   return dbFileHandle;
 }
@@ -4481,7 +4462,4 @@ loadViewPreferences();
 fillFilters();
 wireUi();
 refresh();
-
-
-
 

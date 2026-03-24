@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apeiron Brasil - Opportunities Management</title>
+  <title>Apeiron Brasil - Leads Management</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 </head>
 <body>
 <div class="app">
-  <section class="top"><div class="logo"><img src="./assets/logo.jpg" alt="Apeiron logo" /></div><div><h1>APEIRON BRASIL - Opportunities Management</h1><p>DB-driven lead management focused on action, prioritization, and pipeline progression.</p></div></section>
+  <section class="top"><div class="logo"><img src="./assets/logo.jpg" alt="Apeiron logo" /></div><div><h1>APEIRON BRASIL - Leads Management</h1><p>DB-driven lead management focused on action, prioritization, and pipeline progression.</p></div></section>
   <section class="toolbar">
     <input id="q" placeholder="Search by name, company, role, lead insight..." />
     <select id="fStatus"><option value="">Status: all</option></select>
@@ -68,7 +68,7 @@
   <section class="layout">
     <div class="panel">
       <div class="panel-topline">
-        <h2>Operational Base (editable)</h2>
+        <h2>Operational Base</h2>
         <div class="table-mode-switch table-mode-switch--listby">
           <label for="operationalMode">List by</label>
           <select id="operationalMode">
@@ -76,16 +76,17 @@
             <option value="companies">Companies</option>
           </select>
         </div>
+        <div class="table-mode-switch table-mode-switch--listby">
+          <label for="rowsPerPage">Rows</label>
+          <select id="rowsPerPage">
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="0">All</option>
+          </select>
+        </div>
         <div class="panel-controls">
-          <div class="table-mode-switch">
-            <label for="rowsPerPage">Rows</label>
-            <select id="rowsPerPage">
-              <option value="25" selected>25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-              <option value="0">All</option>
-            </select>
-          </div>
           <button id="btnSaveView" class="alt" type="button">Save View</button>
           <button id="btnResetView" class="alt" type="button">Reset View</button>
           <div class="columns-wrap">
@@ -96,11 +97,11 @@
           </div>
         </div>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap" id="tableWrap">
         <table>
           <thead>
             <tr class="head-row">
-              <th data-col-key="id">ID</th>
+              <th data-col-key="id">Contact ID</th>
               <th data-col-key="company">Company</th>
               <th data-col-key="cityState">City / State</th>
               <th data-col-key="name">Name</th>
@@ -131,6 +132,7 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
+      <div class="table-scroll-sticky" id="tableScrollSticky"><div class="table-scroll-sticky-inner"></div></div>
       <div class="table-pagination">
         <button id="btnPrevPage" type="button" class="pager-btn">Previous</button>
         <span id="pageInfo">Showing 0-0 of 0 | Page 1/1</span>

@@ -13,7 +13,7 @@
     html,body{
       width:100%;
       max-width:100%;
-      overflow-x:hidden;
+      overflow-x:auto;
     }
     body{
       margin:0;
@@ -166,17 +166,20 @@
       border:1px solid var(--line);
       border-radius:12px;
       background:#fff;
-      overflow:hidden;
+      overflow-x:auto;
+      overflow-y:hidden;
     }
     .ranking-item{
       display:grid;
-      grid-template-columns:minmax(260px,2fr) minmax(130px,1fr) minmax(120px,0.7fr) minmax(120px,0.8fr) minmax(180px,1.6fr);
+      grid-template-columns:minmax(220px,2fr) minmax(130px,1fr) minmax(100px,0.7fr) minmax(200px,2fr);
+      min-width:660px;
       gap:10px;
       align-items:center;
       padding:10px 12px;
       border-bottom:1px solid #E6EDE4;
     }
     .ranking-item:last-child{border-bottom:none}
+    .ranking-item.ranking-header{background:#EEF7EA;font-weight:800;font-size:12px;color:#17422D;padding:6px 12px;border-bottom:2px solid #D5DDD2}
     .ranking-company{font-weight:800;color:#102214}
     .ranking-meta{font-size:12px;color:#6D756F;line-height:1.35}
     .ranking-segment{font-size:13px;color:#214228;line-height:1.35}
@@ -342,6 +345,8 @@
     .agenda-item{font-size:12px;padding:5px 0;border-bottom:1px dashed #E8EEE6}
 
     .table-wrap{overflow:auto;border-radius:12px;border:1px solid var(--line)}
+    .table-scroll-sticky{overflow-x:auto;overflow-y:hidden;height:14px;position:sticky;bottom:0;z-index:10;background:#f7f8f6;border-top:1px solid var(--line)}
+    .table-scroll-sticky-inner{height:1px}
     table{width:100%;border-collapse:collapse;min-width:1580px;background:#fff}
     th,td{padding:8px 9px;border-bottom:1px solid #EDF3EF;font-size:13px;vertical-align:top}
     th{background:#EEF7EA;font-weight:800;color:#17422D}
@@ -358,13 +363,27 @@
     .col-resizer{
       position:absolute;
       top:0;
-      right:-4px;
-      width:8px;
+      right:-2px;
+      width:12px;
       height:100%;
       cursor:col-resize;
       z-index:12;
       touch-action:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
+    .col-resizer::after{
+      content:"";
+      display:block;
+      width:3px;
+      height:16px;
+      border-left:1px solid #c0cfba;
+      border-right:1px solid #c0cfba;
+      opacity:0.6;
+      transition:opacity .15s;
+    }
+    .col-resizer:hover::after,.col-resizer:active::after{opacity:1;border-left-color:#6ABF4B;border-right-color:#6ABF4B}
     .frozen-col{
       position:sticky !important;
     }
@@ -565,7 +584,7 @@
 
     thead tr.head-row th[data-col-key="id"],
     thead tr.filter-row th[data-col-key="id"],
-    tbody td[data-col-key="id"]{min-width:96px;}
+    tbody td[data-col-key="id"]{min-width:70px;}
     thead tr.head-row th[data-col-key="company"],
     thead tr.filter-row th[data-col-key="company"],
     tbody td[data-col-key="company"]{min-width:190px;}
@@ -583,10 +602,10 @@
     tbody td[data-col-key="status"]{min-width:170px;}
     thead tr.head-row th[data-col-key="priority"],
     thead tr.filter-row th[data-col-key="priority"],
-    tbody td[data-col-key="priority"]{min-width:130px;}
+    tbody td[data-col-key="priority"]{min-width:90px;}
     thead tr.head-row th[data-col-key="createdDate"],
     thead tr.filter-row th[data-col-key="createdDate"],
-    tbody td[data-col-key="createdDate"]{min-width:140px;}
+    tbody td[data-col-key="createdDate"]{min-width:100px;}
     thead tr.head-row th[data-col-key="nextAction"],
     thead tr.filter-row th[data-col-key="nextAction"],
     tbody td[data-col-key="nextAction"]{min-width:280px;}

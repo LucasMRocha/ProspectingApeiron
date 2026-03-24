@@ -59,51 +59,53 @@ def dashboard_targets(root: Path) -> list[Path]:
 
 def export_payload(workbook_path: Path):
     xls = pd.ExcelFile(workbook_path)
-    ops = pd.read_excel(xls, sheet_name="Leads_Operations")
-    det = pd.read_excel(xls, sheet_name="Leads_Details")
+    available = xls.sheet_names
+    if "Leads" in available:
+        sheet_name = "Leads"
+    elif "Leads_Operations" in available:
+        sheet_name = "Leads_Operations"
+    else:
+        raise ValueError(f"No 'Leads' or 'Leads_Operations' sheet found. Available: {available}")
+    df = pd.read_excel(xls, sheet_name=sheet_name)
 
-    det_map = {}
-    for _, row in det.dropna(subset=["ID"]).iterrows():
-        iid = to_int(row.get("ID"))
-        if iid is not None:
-            det_map[iid] = row
-
+    id_col = "Contact_ID" if "Contact_ID" in df.columns else "ID"
     rows = []
-    for _, row in ops.dropna(subset=["ID"]).iterrows():
-        iid = to_int(row.get("ID"))
+    for _, row in df.dropna(subset=[id_col]).iterrows():
+        iid = to_int(row.get(id_col))
         if iid is None:
             continue
-        d = det_map.get(iid, {})
         item = {
             "id": iid,
             "company": text(row.get("Company")),
             "name": text(row.get("Full Name")),
             "role": text(row.get("Role")),
-            "status": text(row.get("Status")) or text(d.get("Status")),
-            "priority": text(row.get("Priority")) or text(d.get("Priority")),
-            "nextAction": text(row.get("Next Action")) or text(d.get("Next Action")),
-            "nextActionDate": date_text(row.get("Next Action Date")) or date_text(d.get("Next Action Date")),
-            "createdDate": date_text(d.get("Created Date")) or date_text(row.get("Created Date")),
+            "status": text(row.get("Status")),
+            "priority": text(row.get("Priority")),
+            "nextAction": text(row.get("Next Action")),
+            "nextActionDate": date_text(row.get("Next Action Date")),
+            "createdDate": date_text(row.get("Created Date")),
             "channel": text(row.get("Channel")),
-            "owner": text(row.get("Lead Insight")) or text(d.get("Lead Insight")),
-            "source": text(row.get("Source")) or text(d.get("Source")),
-            "sharePointId": text(row.get("SharePoint_ID")) or text(d.get("SharePoint_ID")),
+            "owner": text(row.get("Lead Insight")),
+            "source": text(row.get("Source")),
+            "sharePointId": text(row.get("SharePoint_ID")),
             "possibleDuplicate": text(row.get("Possible Duplicate")),
-            "email": text(d.get("Email")),
-            "phone": text(d.get("Phone")),
-            "linkedin": text(d.get("LinkedIn")),
-            "location": text(d.get("Location")),
-            "department": text(d.get("Department")),
-            "notes": text(d.get("Notes")),
-            "accountSummary": text(d.get("Account_Summary")),
-            "accountSector": text(d.get("Account_Sector")),
-            "accountCityState": text(d.get("Account_City_State")),
-            "accountSize": text(d.get("Account_Size")),
-            "accountRevenue": text(d.get("Account_Revenue")),
-            "accountWebsite": text(d.get("Account_Website")),
-            "accountPhone": text(d.get("Account_Phone")),
-            "accountCnpj": text(d.get("Account_CNPJ")),
-            "accountBrand": text(d.get("Account_Brand") or d.get("Brand")),
+            "email": text(row.get("Email")),
+            "phone": text(row.get("Phone")),
+            "linkedin": text(row.get("LinkedIn")),
+            "location": text(row.get("Location")),
+            "department": text(row.get("Department")),
+            "notes": text(row.get("Notes")),
+            "accountSummary": text(row.get("Account_Summary")),
+            "accountSector": text(row.get("Account_Sector")),
+            "accountCityState": text(row.get("Account_City_State")),
+            "accountSize": text(row.get("Account_Size")),
+            "accountRevenue": text(row.get("Account_Revenue")),
+            "accountWebsite": text(row.get("Account_Website")),
+            "accountPhone": text(row.get("Account_Phone")),
+            "accountCnpj": text(row.get("Account_CNPJ")),
+            "accountBrand": text(row.get("Account_Brand") or row.get("Brand")),
+            "tier": text(row.get("Tier")),
+            "leadScore": text(row.get("Lead_Score")),
         }
         rows.append(item)
 
